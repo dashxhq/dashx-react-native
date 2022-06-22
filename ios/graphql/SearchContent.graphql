@@ -1,0 +1,3 @@
+query SearchContent($input: SearchContentInput!) {
+  searchContent(input: $input)
+}

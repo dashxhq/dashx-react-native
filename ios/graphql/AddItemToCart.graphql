@@ -1,0 +1,33 @@
+mutation AddItemToCart($input: AddItemToCartInput!) {
+  addItemToCart(input:$input) {
+    id
+    status
+    subtotal
+    discount
+    tax
+    total
+    gatewayMeta
+    currencyCode
+    orderItems {
+      id
+      quantity
+      unitPrice
+      subtotal
+      discount
+      tax
+      total
+      custom
+      currencyCode
+    }
+    couponRedemptions {
+      coupon {
+          name
+          identifier
+          discountType
+          discountAmount
+          currencyCode
+          expiresAt
+      }
+    }
+  }
+}

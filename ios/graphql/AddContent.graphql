@@ -1,0 +1,8 @@
+mutation AddContent($input: AddContentInput!) {
+    addContent(input: $input) {
+        id
+        position
+        identifier
+        data
+    }
+}
