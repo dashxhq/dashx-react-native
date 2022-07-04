@@ -1,28 +1,42 @@
+<p align="center">
+    <br />
+    <a href="https://dashx.com"><img src="https://raw.githubusercontent.com/dashxhq/brand-book/master/assets/logo-black-text-color-icon@2x.png" alt="DashX" height="40" /></a>
+    <br />
+    <br />
+    <strong>Your All-in-One Product Stack</strong>
+</p>
+
+<div align="center">
+  <h4>
+    <a href="https://dashx.com">Website</a>
+    <span> | </span>
+    <a href="https://dashxdemo.com">Demos</a>
+    <span> | </span>
+    <a href="https://docs.dashx.com/developer">Documentation</a>
+  </h4>
+</div>
+
+<br />
+
 # @dashx/react-native
 
-_DashX React Native SDK_
-
-<p>
-  <a href="/LICENSE">
-    <img src="https://badgen.net/badge/license/MIT/blue" alt="license"/>
-  </a>
-</p>
+_DashX SDK for React Native_
 
 ## Install
 
+**npm**
 ```sh
-# via npm
-$ npm install @dashx/react-native
+npm install @dashx/react-native
+```
 
-# via yarn
-$ yarn add @dashx/react-native
+**yarn**
+```sh
+yarn add @dashx/react-native
 ```
 
 ### Setup for Android
 
-DashX requires Google Services installed in your app for Firebase to work.
-
-To install Google Services:
+DashX requires Google Services installed in your app for Firebase to work:
 
 - Add `google-services` plugin in your `/android/build.gradle`
 
@@ -63,12 +77,11 @@ apply plugin: 'com.google.gms.google-services'
 // show the dialog at a more appropriate time move this registration accordingly.
 // [START register_for_notifications]
 [UNUserNotificationCenter currentNotificationCenter].delegate = self;
-UNAuthorizationOptions authOptions = UNAuthorizationOptionAlert |
-    UNAuthorizationOptionSound | UNAuthorizationOptionBadge;
+UNAuthorizationOptions authOptions = UNAuthorizationOptionAlert | UNAuthorizationOptionSound | UNAuthorizationOptionBadge;
 [[UNUserNotificationCenter currentNotificationCenter]
     requestAuthorizationWithOptions:authOptions
     completionHandler:^(BOOL granted, NSError * _Nullable error) {
-    }];
+}];
 
 [application registerForRemoteNotifications];
 // [END register_for_notifications]
@@ -98,97 +111,9 @@ pod 'FirebaseMessaging', :modular_headers => true
 
 ## Usage
 
-```javascript
-import DashX from '@dashx/react-native';
+For detailed usage, refer to the [documentation](https://docs.dashx.com/developer).
 
-DashX.setup({ publicKey: 'your_public_key' });
-```
-
-`DashX.setup` accepts following properties:
-
-|Name|Type|Default value|
-|:---:|:--:|:---:|
-|**`publicKey`**|`string` _(Required)_ |`null`|
-|**`baseUri`**|`string`|`https://api.dashx.com/v1`|
-|**`trackAppLifecycleEvents`**|`boolean`|`false`|
-|**`trackScreenViews`**|`boolean`|`false`|
-
-`trackAppLifecycleEvents` when enabled will automatically track these events:
-
-- `Application Installed`
-- `Application Updated`
-- `Application Opened`
-- `Application Backgrounded` with `session_length` in seconds.
-- `Application Crashed` with `exception`
-
-`trackScreenViews` when enabled will send this event whenever a screen/activity is viewed:
-
-- `Screen Viewed` with `name` set to the screen name.
-
-### Identify User
-
-- Existing user
-
-```javascript
-DashX.identify('uid_of_user');
-```
-
-- New user
-
-```javascript
-DashX.identify({
-  firstName: 'John',
-  lastName: 'Doe',
-  email: 'john@example.com',
-  phone: '+1-234-567-8910'
-});
-```
-
-For new user `identify()` accepts following properties:
-
-|Name|Type|
-|:---:|:--:|
-|**`firstName`**|`string`|
-|**`lastName`**|`string`|
-|**`email`**|`string`|
-|**`phone`**|`string`|
-
-*Please note that `identify()` should not be called with `null` or `undefined`*
-
-### Track Events
-
-```javascript
-DashX.track('event_name', { hello: 'world' } /* Event data */);
-```
-
-### Reset User
-
-`reset()` clears out the information associated with a user. *Must* be called after a user logs out.
-
-```javascript
-DashX.reset();
-```
-
-### Set Identity Token
-
-In order to subcribe to push notifications you need to set identity token like so
-
-```javascript
-DashX.setIdentityToken('identity_token');
-```
-
-You can generate identity token by using `POST` `/v1/generate_token` which accepts
-
-```json
-{
-  "value": "uid_here",
-  "key": "dashx_private_key"
-}
-```
-
-## Development
-
-### Setting up development environment
+## Contributing
 
 Please follow [these steps](https://github.com/dashxhq/dashx-js/tree/master/examples/react-native#setting-up-development-environment) to set-up development environment.
 
