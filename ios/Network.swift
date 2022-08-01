@@ -9,6 +9,10 @@ class Network {
       self.baseUri = to
     }
 
+    func getBaseUri() -> String {
+      return self.baseUri
+    }
+
     private(set) lazy var apollo: ApolloClient = {
         let client = URLSessionClient()
         let cache = InMemoryNormalizedCache()
@@ -23,7 +27,7 @@ class Network {
     }()
 }
 
-class NetworkInterceptorProvider: LegacyInterceptorProvider {
+class NetworkInterceptorProvider: DefaultInterceptorProvider {
     override func interceptors<Operation: GraphQLOperation>(for operation: Operation) -> [ApolloInterceptor] {
         var interceptors = super.interceptors(for: operation)
         interceptors.insert(ConfigInterceptor.shared, at: 0)

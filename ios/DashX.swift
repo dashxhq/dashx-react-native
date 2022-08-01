@@ -56,6 +56,16 @@ class DashX: RCTEventEmitter {
         }
     }
 
+    @objc(getConnectionConfig:rejecter:)
+    func getConnectionConfig(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+      return resolve([
+        "baseUri": Network.shared.getBaseUri(),
+        "publicKey": ConfigInterceptor.shared.publicKey,
+        "targetEnvironment": ConfigInterceptor.shared.targetEnvironment,
+        "identityToken": ConfigInterceptor.shared.identityToken,
+      ])
+    }
+
     @objc(identify:options:)
     func identify(_ uid: String?, _ options: NSDictionary?) {
         try? dashXClient.identify(uid, withOptions: options)
