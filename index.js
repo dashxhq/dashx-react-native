@@ -1,12 +1,19 @@
 import { NativeEventEmitter, NativeModules } from 'react-native'
+import { parseFilterObject, toContentSingleton } from './utils'
+import {
+  prepareExternalAsset,
+  queryExternalAsset,
+  uploadExternalAsset,
+} from './utils/RestAPIClient'
 
 import ContentOptionsBuilder from './ContentOptionsBuilder'
-import { parseFilterObject, toContentSingleton } from './utils'
 
 const { DashX } = NativeModules
 const dashXEventEmitter = new NativeEventEmitter(DashX)
 
-const { identify, track, fetchContent, searchContent } = DashX
+//TODO Get connection config from Android layer as well
+const { identify, track, fetchContent, searchContent, getConnectionConfig } =
+  DashX
 
 // Handle overloads at JS, because Native modules doesn't allow that
 // https://github.com/facebook/react-native/issues/19116
@@ -20,10 +27,14 @@ DashX.identify = (options) => {
 
 DashX.track = (event, data) => track(event, data || null)
 
+DashX.getConnectionConfig = () => {
+  return getConnectionConfig()
+}
+
 DashX.searchContent = (contentType, options) => {
   if (!options) {
-    return new ContentOptionsBuilder(
-      (wrappedOptions) => searchContent(contentType, wrappedOptions)
+    return new ContentOptionsBuilder((wrappedOptions) =>
+      searchContent(contentType, wrappedOptions)
     )
   }
 
@@ -40,6 +51,36 @@ DashX.searchContent = (contentType, options) => {
 
 DashX.fetchContent = (contentType, options) => {
   return fetchContent(contentType, options)
+}
+
+DashX.uploadExternalAsset = async (file, externalColumnId) => {
+  const connectionConfig = await getConnectionConfig()
+
+  return new Promise((resolve, reject) => {
+    uploadExternalAsset(
+      file,
+      externalColumnId,
+      connectionConfig,
+      resolve,
+      reject
+    )
+  })
+}
+
+DashX.prepareExternalAsset = async (externalColumnId) => {
+  const connectionConfig = await getConnectionConfig()
+
+  return new Promise((resolve, reject) => {
+    prepareExternalAsset(externalColumnId, connectionConfig, resolve, reject)
+  })
+}
+
+DashX.externalAsset = async (assetId) => {
+  const connectionConfig = await getConnectionConfig()
+
+  return new Promise((resolve, reject) => {
+    queryExternalAsset(assetId, connectionConfig, resolve, reject)
+  })
 }
 
 DashX.onMessageReceived = (callback) =>
