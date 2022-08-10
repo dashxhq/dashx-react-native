@@ -1,11 +1,20 @@
 package com.dashx.rn.sdk
 
+import android.annotation.TargetApi
+import android.content.Context
+import android.database.Cursor
+import android.net.Uri
+import android.os.Build
+import android.provider.DocumentsContract
+import android.provider.MediaStore
 import com.dashx.rn.sdk.util.*
-import com.facebook.react.bridge.*
-import com.dashx.sdk.DashXClient as DashX
 import com.dashx.sdk.DashXLog
+import com.dashx.sdk.data.ExternalAsset
+import com.facebook.react.bridge.*
+import com.google.gson.Gson
 import java.io.File
-import kotlin.collections.HashMap
+import com.dashx.sdk.DashXClient as DashX
+
 
 class DashXReactNativeModule(private val reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
     private val tag = DashXReactNativeModule::class.java.simpleName
@@ -34,6 +43,11 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
     fun identify(uid: String?, options: ReadableMap?) {
         val optionsHashMap = MapUtil.toMap(options)
         dashXClient?.identify(optionsHashMap as HashMap<String, String>?)
+    }
+
+    @ReactMethod
+    fun setIdentity(uid: String?, token: String?) {
+        dashXClient?.setIdentity(uid, token)
     }
 
     @ReactMethod
@@ -184,7 +198,7 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
             throw Exception("Encountered an error while parsing file")
         }
 
-        val fileObject = File(jsonFile?.get("uri") as String)
+        val fileObject = File(getRealPathFromURI(jsonFile?.get("uri").toString()))
 
         dashXClient?.uploadExternalAsset(
             fileObject,
@@ -193,7 +207,8 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
                 promise.reject("EUNSPECIFIED", it)
             },
             onSuccess = { content ->
-                promise.resolve(convertJsonToMap(content))
+                val jsonObject = Gson().toJsonTree(content, ExternalAsset::class.java).asJsonObject
+                promise.resolve(convertJsonToMap(jsonObject))
             }
         )
     }
@@ -201,5 +216,20 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
     @ReactMethod
     fun subscribe() {
         dashXClient?.subscribe()
+    }
+
+    //FIXME Amend the logic to work with React Native content URIs
+    fun getRealPathFromURI(contentUriString: String?): String? {
+        val contentUri = Uri.parse(contentUriString)
+        var cursor: Cursor? = null
+        return try {
+            val proj = arrayOf(MediaStore.Images.Media.DATA)
+            cursor = reactContext.contentResolver.query(contentUri!!, proj, null, null, null)
+            cursor!!.moveToFirst()
+            val column_index = cursor.getColumnIndex(proj[0])
+            cursor.getString(column_index)
+        } finally {
+            cursor?.close()
+        }
     }
 }

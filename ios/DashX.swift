@@ -22,17 +22,17 @@ class DashXReactNative: RCTEventEmitter {
     }
 
     @objc
-    func setup(_ options: NSDictionary?) {
+    func setup(_ options: NSDictionary) {
         dashXClient.setup(options)
     }
 
     @objc(identify:)
-    func identify(_ options: NSDictionary?) {
+    func identify(_ options: NSDictionary) {
         try? dashXClient.identify(withOptions: options)
     }
 
     @objc(setIdentity:token:)
-    func setIdentity(_ uid: String?, _ token: String?) {
+    func setIdentity(_ uid: String, _ token: String) {
         dashXClient.setIdentity(uid: uid, token: token)
     }
 

@@ -30,7 +30,6 @@
 		7C3CFED2289B9C6E00D184AB /* DashXReactNative.xcworkspace */ = {isa = PBXFileReference; lastKnownFileType = wrapper.workspace; path = DashXReactNative.xcworkspace; sourceTree = "<group>"; };
 		7C3CFED3289B9C6E00D184AB /* DashX.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DashX.swift; sourceTree = "<group>"; };
 		7C3CFED4289B9C6E00D184AB /* DashXEventEmitter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DashXEventEmitter.swift; sourceTree = "<group>"; };
-		B3E7B5881CC2AC0600A0062D /* DashXReactNative.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DashXReactNative.h; sourceTree = "<group>"; };
 		B3E7B5891CC2AC0600A0062D /* DashXReactNative.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DashXReactNative.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -56,7 +55,6 @@
 		58B511D21A9E6C8500147676 = {
 			isa = PBXGroup;
 			children = (
-				B3E7B5881CC2AC0600A0062D /* DashXReactNative.h */,
 				B3E7B5891CC2AC0600A0062D /* DashXReactNative.m */,
 				134814211AA4EA7D00B7C361 /* Products */,
 				7C3CFED3289B9C6E00D184AB /* DashX.swift */,

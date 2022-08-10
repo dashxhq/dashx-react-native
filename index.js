@@ -17,8 +17,6 @@ const {
   externalAsset,
 } = DashX;
 
-// Handle overloads at JS, because Native modules doesn't allow that
-// https://github.com/facebook/react-native/issues/19116
 DashX.identify = (options) => {
   return identify(options)
 }
@@ -48,21 +46,15 @@ DashX.fetchContent = (contentType, options) => {
 }
 
 DashX.uploadExternalAsset = (file, externalColumnId) => {
-  return new Promise((resolve, reject) => {
-    uploadExternalAsset(file, externalColumnId, resolve, reject)
-  })
+  return uploadExternalAsset(file, externalColumnId);
 }
 
-DashX.prepareExternalAsset = async (externalColumnId) => {
-  return new Promise((resolve, reject) => {
-    prepareExternalAsset(externalColumnId, resolve, reject)
-  })
+DashX.prepareExternalAsset = (externalColumnId) => {
+  return prepareExternalAsset(externalColumnId);
 }
 
-DashX.externalAsset = async (assetId) => {
-  return new Promise((resolve, reject) => {
-    externalAsset(assetId, resolve, reject)
-  })
+DashX.externalAsset = (assetId) => {
+  return externalAsset(assetId);
 }
 
 DashX.onMessageReceived = (callback) =>
