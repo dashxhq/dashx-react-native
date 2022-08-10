@@ -1,17 +1,18 @@
 package com.dashx.rn.sdk
 
+import com.dashx.rn.sdk.util.*
 import com.facebook.react.bridge.*
+import com.dashx.sdk.DashXClient as DashX
 import com.dashx.sdk.DashXLog
-import com.google.android.gms.tasks.OnCompleteListener
-import com.google.firebase.messaging.FirebaseMessaging
+import java.io.File
+import kotlin.collections.HashMap
 
-class DashXModule(private val reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
-    private val tag = DashXModule::class.java.simpleName
-    private var interceptor: DashXClientInterceptor = DashXClientInterceptor.instance
-
+class DashXReactNativeModule(private val reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
+    private val tag = DashXReactNativeModule::class.java.simpleName
+    private var dashXClient: DashX? = null
 
     override fun getName(): String {
-        return "DashX"
+        return "DashXReactNative"
     }
 
     @ReactMethod
@@ -21,79 +22,51 @@ class DashXModule(private val reactContext: ReactApplicationContext) : ReactCont
 
     @ReactMethod
     fun setup(options: ReadableMap) {
-        interceptor.createDashXClient(
-            reactContext,
+        dashXClient = DashX.createInstance(
+            reactContext, 
             options.getString("publicKey")!!,
-            options.getStringIfPresent("baseUri"),
-            options.getStringIfPresent("targetEnvironment"),
-            options.getStringIfPresent("targetInstallation")
+            options.getStringIfPresent("baseUri")!!,
+            options.getStringIfPresent("targetEnvironment")
         )
-        interceptor.getDashXClient()?.generateAnonymousUid()
-
-        if (options.hasKey("trackAppLifecycleEvents") && options.getBoolean("trackAppLifecycleEvents")) {
-            DashXExceptionHandler.enable()
-            DashXActivityLifecycleCallbacks.enableActivityLifecycleTracking(reactContext.applicationContext)
-        }
-
-        if (options.hasKey("trackScreenViews") && options.getBoolean("trackScreenViews")) {
-            DashXActivityLifecycleCallbacks.enableScreenTracking(reactContext.applicationContext)
-        }
-
-        FirebaseMessaging.getInstance().getToken()
-            .addOnCompleteListener(OnCompleteListener { task ->
-                if (!task.isSuccessful) {
-                    DashXLog.d(tag, "FirebaseMessaging.getInstance().getToken() failed: $task.exception")
-                    return@OnCompleteListener
-                }
-
-                val token = task.getResult()
-                token?.let { it -> interceptor.getDashXClient()?.setDeviceToken(it) }
-                DashXLog.d(tag, "Firebase Initialised with: $token")
-            });
     }
 
     @ReactMethod
     fun identify(uid: String?, options: ReadableMap?) {
-        val optionsHashMap = options?.toHashMap()
-        interceptor.getDashXClient()?.identify(uid, optionsHashMap as HashMap<String, String>?)
+        val optionsHashMap = MapUtil.toMap(options)
+        dashXClient?.identify(optionsHashMap as HashMap<String, String>?)
     }
 
     @ReactMethod
     fun reset() {
-        interceptor.getDashXClient()?.reset()
+        dashXClient?.reset()
     }
 
     @ReactMethod
     fun track(event: String, data: ReadableMap?) {
         val jsonData = try {
-            data?.toHashMap() as HashMap<String, String>
+            MapUtil.toMap(data) as HashMap<String, String>
         } catch (e: Exception) {
             DashXLog.d(tag, e.message)
             return
         }
 
-        interceptor.getDashXClient()?.track(event, jsonData)
+        dashXClient?.track(event, jsonData)
     }
 
     @ReactMethod
     fun screen(screenName: String, data: ReadableMap?) {
-        interceptor.getDashXClient()?.screen(screenName, data?.toHashMap() as HashMap<String, String>)
-    }
-
-    @ReactMethod
-    fun setIdentityToken(identityToken: String) {
-        interceptor.getDashXClient()?.setIdentityToken(identityToken)
+        dashXClient?.screen(screenName, MapUtil.toMap(data) as HashMap<String, String>)
     }
 
     @ReactMethod
     fun fetchContent(urn: String, options: ReadableMap?, promise: Promise) {
-        interceptor.getDashXClient()?.fetchContent(
+        dashXClient?.fetchContent(
             urn,
             options?.getBooleanIfPresent("preview"),
             options?.getStringIfPresent("language"),
-            options?.getArray("fields")?.toArrayList() as List<String>?,
-            options?.getArray("include")?.toArrayList() as List<String>?,
-            options?.getArray("exclude")?.toArrayList() as List<String>?,
+            listOf(options?.getArray("fields")) as List<String>?,
+            listOf(options?.getArray("include")) as List<String>?,
+            listOf(options?.getArray("exclude")) as List<String>?,
             onError = {
                 promise.reject("EUNSPECIFIED", it)
             },
@@ -119,7 +92,7 @@ class DashXModule(private val reactContext: ReactApplicationContext) : ReactCont
             throw Exception("Encountered an error while parsing order")
         }
 
-        interceptor.getDashXClient()?.searchContent(
+        dashXClient?.searchContent(
             contentType,
             options?.getString("returnType") ?: "all",
             jsonFilter,
@@ -127,9 +100,9 @@ class DashXModule(private val reactContext: ReactApplicationContext) : ReactCont
             options?.getIntIfPresent("limit"),
             options?.getBooleanIfPresent("preview"),
             options?.getStringIfPresent("language"),
-            options?.getArray("fields")?.toArrayList() as List<String>?,
-            options?.getArray("include")?.toArrayList() as List<String>?,
-            options?.getArray("exclude")?.toArrayList() as List<String>?,
+            listOf(options?.getArray("fields")) as List<String>?,
+            listOf(options?.getArray("include")) as List<String>?,
+            listOf(options?.getArray("exclude")) as List<String>?,
             onError = {
                 promise.reject("EUNSPECIFIED", it)
             },
@@ -159,7 +132,7 @@ class DashXModule(private val reactContext: ReactApplicationContext) : ReactCont
             throw Exception("Encountered an error while parsing custom")
         }
 
-        interceptor.getDashXClient()?.addItemToCart(
+        dashXClient?.addItemToCart(
             itemId,
             pricingId,
             quantity,
@@ -176,7 +149,46 @@ class DashXModule(private val reactContext: ReactApplicationContext) : ReactCont
 
     @ReactMethod
     fun fetchCart(promise: Promise) {
-        interceptor.getDashXClient()?.fetchCart(
+        dashXClient?.fetchCart(
+            onError = {
+                promise.reject("EUNSPECIFIED", it)
+            },
+            onSuccess = { content ->
+                promise.resolve(convertJsonToMap(content))
+            }
+        )
+    }
+
+    @ReactMethod
+    fun fetchStoredPreferences(promise: Promise) {
+        dashXClient?.fetchStoredPreferences(
+            onError = {
+                promise.reject("EUNSPECIFIED", it)
+            },
+            onSuccess = { content ->
+                promise.resolve(convertJsonToMap(content))
+            }
+        )
+    }
+
+    @ReactMethod
+    fun uploadExternalAsset(
+        file: ReadableMap, 
+        externalColumnId: String, 
+        promise: Promise
+    ) {
+        val jsonFile = try {
+            convertMapToJson(file)
+        } catch (e: Exception) {
+            DashXLog.d(tag, e.message)
+            throw Exception("Encountered an error while parsing file")
+        }
+
+        val fileObject = File(jsonFile?.get("uri") as String)
+
+        dashXClient?.uploadExternalAsset(
+            fileObject,
+            externalColumnId,
             onError = {
                 promise.reject("EUNSPECIFIED", it)
             },
@@ -188,6 +200,6 @@ class DashXModule(private val reactContext: ReactApplicationContext) : ReactCont
 
     @ReactMethod
     fun subscribe() {
-        interceptor.getDashXClient()?.subscribe()
+        dashXClient?.subscribe()
     }
 }

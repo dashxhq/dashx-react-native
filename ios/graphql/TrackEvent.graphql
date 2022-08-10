@@ -1,5 +1,0 @@
-mutation TrackEvent($input: TrackEventInput!) {
-    trackEvent(input: $input) {
-        success
-    }
-}

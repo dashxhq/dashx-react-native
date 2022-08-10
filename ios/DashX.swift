@@ -1,9 +1,11 @@
 import Foundation
-import FirebaseMessaging
+import DashX
 
-@objc(DashX)
-class DashX: RCTEventEmitter {
-    private var dashXClient = DashXClient.instance
+typealias CBU = CallbackUtils
+
+@objc(DashXReactNative)
+class DashXReactNative: RCTEventEmitter {
+    private var dashXClient = DashX
 
     override init() {
         super.init()
@@ -12,7 +14,7 @@ class DashX: RCTEventEmitter {
 
     @objc
     func setLogLevel(_ logLevel: Int) {
-        DashXLog.setLogLevel(to: logLevel)
+        dashXClient.setLogLevel(to: logLevel)
     }
 
     override func supportedEvents() -> [String] {
@@ -21,59 +23,17 @@ class DashX: RCTEventEmitter {
 
     @objc
     func setup(_ options: NSDictionary?) {
-        ConfigInterceptor.shared.publicKey = options?.value(forKey: "publicKey") as? String
-
-        DashXAppDelegate.swizzleDidReceiveRemoteNotificationFetchCompletionHandler()
-
-        if let baseUri = options?.value(forKey: "baseUri") {
-            Network.shared.setBaseUri(to: baseUri as! String)
-        }
-
-        if let targetInstallation = options?.value(forKey: "targetInstallation") {
-            dashXClient.setTargetInstallation(to: targetInstallation as! String)
-        }
-
-        if let targetEnvironment = options?.value(forKey: "targetEnvironment") {
-            dashXClient.setTargetEnvironment(to: targetEnvironment as! String)
-        }
-
-        if let trackAppLifecycleEvents = options?.value(forKey: "trackAppLifecycleEvents"), trackAppLifecycleEvents as! Bool {
-            DashXApplicationLifecycleCallbacks.instance.enable()
-        }
-
-        if let trackScreenViews = options?.value(forKey: "trackScreenViews"), trackScreenViews as! Bool {
-            UIViewController.swizzle()
-        }
-
-        // Based on https://firebase.google.com/docs/cloud-messaging/ios/client#access_the_registration_token
-        Messaging.messaging().token { token, error in
-            if let error = error {
-                DashXLog.d(tag: #function, "Error fetching FCM registration token: \(error)")
-            } else if let token = token {
-                DashXLog.d(tag: #function, "Firebase initialised with: \(token)")
-                self.dashXClient.setDeviceToken(to: token)
-            }
-        }
+        dashXClient.setup(options)
     }
 
-    @objc(getConnectionConfig:rejecter:)
-    func getConnectionConfig(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
-      return resolve([
-        "baseUri": Network.shared.getBaseUri(),
-        "publicKey": ConfigInterceptor.shared.publicKey,
-        "targetEnvironment": ConfigInterceptor.shared.targetEnvironment,
-        "identityToken": ConfigInterceptor.shared.identityToken,
-      ])
+    @objc(identify:)
+    func identify(_ options: NSDictionary?) {
+        try? dashXClient.identify(withOptions: options)
     }
 
-    @objc(identify:options:)
-    func identify(_ uid: String?, _ options: NSDictionary?) {
-        try? dashXClient.identify(uid, withOptions: options)
-    }
-
-    @objc
-    func setIdentityToken(_ identityToken: String) {
-        dashXClient.setIdentityToken(to: identityToken)
+    @objc(setIdentity:token:)
+    func setIdentity(_ uid: String?, _ token: String?) {
+        dashXClient.setIdentity(uid: uid, token: token)
     }
 
     @objc
@@ -96,18 +56,18 @@ class DashX: RCTEventEmitter {
         let optionsDictionary = options as? [String: Any]
 
         dashXClient.searchContent(
-            contentType,
-            optionsDictionary?["returnType"] as! String? ?? "all",
-            optionsDictionary?["filter"] as! NSDictionary?,
-            optionsDictionary?["order"] as! NSDictionary?,
-            optionsDictionary?["limit"] as! Int?,
-            optionsDictionary?["preview"] as! Bool?,
-            optionsDictionary?["language"] as! String?,
-            optionsDictionary?["fields"] as! [String]?,
-            optionsDictionary?["include"] as! [String]?,
-            optionsDictionary?["exclude"] as! [String]?,
-            resolve,
-            reject
+            contentType: contentType,
+            returnType: optionsDictionary?["returnType"] as! String? ?? "all",
+            filter: optionsDictionary?["filter"] as! NSDictionary?,
+            order: optionsDictionary?["order"] as! NSDictionary?,
+            limit: optionsDictionary?["limit"] as! Int?,
+            preview: optionsDictionary?["preview"] as! Bool?,
+            language: optionsDictionary?["language"] as! String?,
+            fields: optionsDictionary?["fields"] as! [String]?,
+            include: optionsDictionary?["include"] as! [String]?,
+            exclude: optionsDictionary?["exclude"] as! [String]?,
+            successCallback: CBU.resolveToSuccessCallback(resolve),
+            failureCallback: CBU.rejectToFailureCallback(reject)
         )
     }
 
@@ -117,15 +77,15 @@ class DashX: RCTEventEmitter {
         let urnArray = urn.split{$0 == "/"}.map(String.init)
 
         dashXClient.fetchContent(
-            urnArray[0],
-            urnArray[1],
-            optionsDictionary?["preview"] as! Bool?,
-            optionsDictionary?["language"] as! String?,
-            optionsDictionary?["fields"] as! [String]?,
-            optionsDictionary?["include"] as! [String]?,
-            optionsDictionary?["exclude"] as! [String]?,
-            resolve,
-            reject
+            contentType: urnArray[0],
+            content: urnArray[1],
+            preview: optionsDictionary?["preview"] as! Bool?,
+            language: optionsDictionary?["language"] as! String?,
+            fields: optionsDictionary?["fields"] as! [String]?,
+            include: optionsDictionary?["include"] as! [String]?,
+            exclude: optionsDictionary?["exclude"] as! [String]?,
+            successCallback: CBU.resolveToSuccessCallback(resolve),
+            failureCallback: CBU.rejectToFailureCallback(reject)
         )
     }
 
@@ -133,13 +93,13 @@ class DashX: RCTEventEmitter {
     func addItemToCart(_ itemId: String, _ pricingId: String, _ quantity: String, _ reset: Bool, _ custom: NSDictionary?, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
 
         dashXClient.addItemToCart(
-            itemId,
-            pricingId,
-            quantity,
-            reset,
-            custom,
-            resolve,
-            reject
+            itemId: itemId,
+            pricingId: pricingId,
+            quantity: quantity,
+            reset: reset,
+            custom: custom,
+            successCallback: CBU.resolveToSuccessCallback(resolve),
+            failureCallback: CBU.rejectToFailureCallback(reject)
         )
     }
 
@@ -147,13 +107,48 @@ class DashX: RCTEventEmitter {
     func fetchCart(resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
 
         dashXClient.fetchCart(
-            resolve,
-            reject
+            successCallback: CBU.resolveToSuccessCallback(resolve),
+            failureCallback: CBU.rejectToFailureCallback(reject)
+        )
+    }
+
+    @objc(fetchStoredPreferences:rejecter:)
+    func fetchStoredPreferences(resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+
+        dashXClient.fetchStoredPreferences(
+            successCallback: CBU.resolveToSuccessCallback(resolve),
+            failureCallback: CBU.rejectToFailureCallback(reject)
+        )
+    }
+
+    @objc(uploadExternalAsset:externalColumnId:resolver:rejecter:)
+    func uploadExternalAsset(_ file: NSDictionary, _ externalColumnId: String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+        let fileDictionary = file as? [String: Any]
+        
+        dashXClient.uploadExternalAsset(
+            filePath: URL(fileURLWithPath: fileDictionary?["uri"] as! String),
+            externalColumnId: externalColumnId,
+            successCallback: CBU.resolveToSuccessCallback(resolve),
+            failureCallback: CBU.rejectToFailureCallback(reject)
         )
     }
 
     @objc
     func subscribe() {
         dashXClient.subscribe()
+    }
+}
+
+class CallbackUtils {
+    static func resolveToSuccessCallback(_ resolve: @escaping RCTPromiseResolveBlock) -> SuccessCallback {
+        return resolve
+    }
+
+    static func rejectToFailureCallback(_ reject: @escaping RCTPromiseRejectBlock) -> FailureCallback {
+        let result: FailureCallback = { (error) in
+            reject("\((error as NSError).code)", error.localizedDescription, error)
+        }
+
+        return result
     }
 }
