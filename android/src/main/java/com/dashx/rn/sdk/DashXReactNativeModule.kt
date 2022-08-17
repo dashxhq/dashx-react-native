@@ -30,17 +30,17 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
     }
 
     @ReactMethod
-    fun setup(options: ReadableMap) {
+    fun configure(options: ReadableMap) {
         dashXClient = DashX.createInstance(
             reactContext, 
             options.getString("publicKey")!!,
-            options.getStringIfPresent("baseUri")!!,
+            options.getStringIfPresent("baseURI"),
             options.getStringIfPresent("targetEnvironment")
         )
     }
 
     @ReactMethod
-    fun identify(uid: String?, options: ReadableMap?) {
+    fun identify(options: ReadableMap?) {
         val optionsHashMap = MapUtil.toMap(options)
         dashXClient?.identify(optionsHashMap as HashMap<String, String>?)
     }
@@ -198,11 +198,30 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
             throw Exception("Encountered an error while parsing file")
         }
 
-        val fileObject = File(getRealPathFromURI(jsonFile?.get("uri").toString()))
+        // Remove unnecessary double quotes from RN URI
+        val filePath = getFilePathFromURIString(jsonFile?.get("uri").toString())
+        val fileObject = File(filePath)
 
         dashXClient?.uploadExternalAsset(
             fileObject,
             externalColumnId,
+            onError = {
+                promise.reject("EUNSPECIFIED", it)
+            },
+            onSuccess = { content ->
+                val jsonObject = Gson().toJsonTree(content, ExternalAsset::class.java).asJsonObject
+                promise.resolve(convertJsonToMap(jsonObject))
+            }
+        )
+    }
+
+    @ReactMethod
+    fun externalAsset(
+            id: String,
+            promise: Promise
+    ) {
+        dashXClient?.externalAsset(
+            id,
             onError = {
                 promise.reject("EUNSPECIFIED", it)
             },
@@ -219,17 +238,13 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
     }
 
     //FIXME Amend the logic to work with React Native content URIs
-    fun getRealPathFromURI(contentUriString: String?): String? {
-        val contentUri = Uri.parse(contentUriString)
-        var cursor: Cursor? = null
-        return try {
-            val proj = arrayOf(MediaStore.Images.Media.DATA)
-            cursor = reactContext.contentResolver.query(contentUri!!, proj, null, null, null)
-            cursor!!.moveToFirst()
-            val column_index = cursor.getColumnIndex(proj[0])
-            cursor.getString(column_index)
-        } finally {
-            cursor?.close()
-        }
+    fun getFilePathFromURIString(contentUriString: String): String {
+        val sanitizedURI = contentUriString.replace("\"", "")
+        val path = Uri.parse(sanitizedURI).path
+
+        // Remove unnecessary URI component
+        val filePath = path!!.substring(path?.indexOf(':') + 1)
+
+        return filePath
     }
 }

@@ -12,18 +12,19 @@ class DashXReactNative: RCTEventEmitter {
         DashXEventEmitter.instance.registerEventEmitter(eventEmitter: self)
     }
 
-    @objc
-    func setLogLevel(_ logLevel: Int) {
-        dashXClient.setLogLevel(to: logLevel)
-    }
-
     override func supportedEvents() -> [String] {
         return ["messageReceived"]
     }
 
     @objc
-    func setup(_ options: NSDictionary) {
-        dashXClient.setup(options)
+    func configure(_ options: NSDictionary) {
+        let publicKey = options["publicKey"] as! String,
+            baseURI = options["baseURI"] as? String,
+            targetEnvironment = options["targetEnvironment"] as? String
+        
+        dashXClient.configure(withPublicKey: publicKey,
+                              baseURI: baseURI,
+                              targetEnvironment: targetEnvironment)
     }
 
     @objc(identify:)
@@ -38,7 +39,8 @@ class DashXReactNative: RCTEventEmitter {
 
     @objc
     func reset() {
-        dashXClient.reset()
+      // TODO Enable the following after iOS 1.0.2 release
+      // dashXClient.reset()
     }
 
     @objc(track:data:)
@@ -48,7 +50,8 @@ class DashXReactNative: RCTEventEmitter {
 
     @objc(screen:data:)
     func screen(_ screenName: String, _ data: NSDictionary?) {
-        dashXClient.screen(screenName, withData: data)
+      // TODO Enable the following after iOS 1.0.2 release
+      // dashXClient.screen(screenName, withData: data)
     }
 
     @objc(searchContent:options:resolver:rejecter:)
@@ -104,7 +107,7 @@ class DashXReactNative: RCTEventEmitter {
     }
 
     @objc(fetchCart:rejecter:)
-    func fetchCart(resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+    func fetchCart(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
 
         dashXClient.fetchCart(
             successCallback: CBU.resolveToSuccessCallback(resolve),
@@ -113,7 +116,7 @@ class DashXReactNative: RCTEventEmitter {
     }
 
     @objc(fetchStoredPreferences:rejecter:)
-    func fetchStoredPreferences(resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+    func fetchStoredPreferences(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
 
         dashXClient.fetchStoredPreferences(
             successCallback: CBU.resolveToSuccessCallback(resolve),
@@ -123,19 +126,32 @@ class DashXReactNative: RCTEventEmitter {
 
     @objc(uploadExternalAsset:externalColumnId:resolver:rejecter:)
     func uploadExternalAsset(_ file: NSDictionary, _ externalColumnId: String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
-        let fileDictionary = file as? [String: Any]
-        
-        dashXClient.uploadExternalAsset(
-            filePath: URL(fileURLWithPath: fileDictionary?["uri"] as! String),
-            externalColumnId: externalColumnId,
-            successCallback: CBU.resolveToSuccessCallback(resolve),
-            failureCallback: CBU.rejectToFailureCallback(reject)
-        )
+        if let fileDictionary = file as? [String: Any], let fileURI = fileDictionary["uri"] as? String {
+          // Remove unnecessary file:/// prefix for correct URL resolution
+          let normalizedURI = fileURI.replacingOccurrences(of: "file:///", with: "")
+          
+          dashXClient.uploadExternalAsset(
+              fileURL: URL(fileURLWithPath: normalizedURI),
+              externalColumnId: externalColumnId,
+              successCallback: CBU.resolveToSuccessCallback(resolve),
+              failureCallback: CBU.rejectToFailureCallback(reject)
+          )
+        }
+    }
+
+    @objc(externalAsset:resolver:rejecter:)
+    func externalAsset(_ assetId: String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+      dashXClient.externalAsset(
+        assetId: assetId,
+        successCallback: CBU.resolveToSuccessCallback(resolve),
+        failureCallback: CBU.rejectToFailureCallback(reject)
+      )
     }
 
     @objc
     func subscribe() {
-        dashXClient.subscribe()
+      // TODO Enable the following after iOS 1.0.2 release
+      // dashXClient.subscribe()
     }
 }
 
