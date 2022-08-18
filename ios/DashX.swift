@@ -39,8 +39,7 @@ class DashXReactNative: RCTEventEmitter {
 
     @objc
     func reset() {
-      // TODO Enable the following after iOS 1.0.2 release
-      // dashXClient.reset()
+      dashXClient.reset()
     }
 
     @objc(track:data:)
@@ -50,8 +49,7 @@ class DashXReactNative: RCTEventEmitter {
 
     @objc(screen:data:)
     func screen(_ screenName: String, _ data: NSDictionary?) {
-      // TODO Enable the following after iOS 1.0.2 release
-      // dashXClient.screen(screenName, withData: data)
+      dashXClient.screen(screenName, withData: data)
     }
 
     @objc(searchContent:options:resolver:rejecter:)
@@ -150,8 +148,7 @@ class DashXReactNative: RCTEventEmitter {
 
     @objc
     func subscribe() {
-      // TODO Enable the following after iOS 1.0.2 release
-      // dashXClient.subscribe()
+      dashXClient.subscribe()
     }
 }
 
