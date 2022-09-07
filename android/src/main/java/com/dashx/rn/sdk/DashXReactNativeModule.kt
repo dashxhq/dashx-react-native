@@ -32,7 +32,7 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
     @ReactMethod
     fun configure(options: ReadableMap) {
         dashXClient = DashX.createInstance(
-            reactContext, 
+            reactContext,
             options.getString("publicKey")!!,
             options.getStringIfPresent("baseURI"),
             options.getStringIfPresent("targetEnvironment")
@@ -41,7 +41,7 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
 
     @ReactMethod
     fun identify(options: ReadableMap?) {
-        val optionsHashMap = MapUtil.toMap(options)
+        val optionsHashMap = options?.toHashMap()
         dashXClient?.identify(optionsHashMap as HashMap<String, String>?)
     }
 
@@ -58,7 +58,7 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
     @ReactMethod
     fun track(event: String, data: ReadableMap?) {
         val jsonData = try {
-            MapUtil.toMap(data) as HashMap<String, String>
+            data?.toHashMap() as HashMap<String, String>
         } catch (e: Exception) {
             DashXLog.d(tag, e.message)
             return
@@ -69,7 +69,7 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
 
     @ReactMethod
     fun screen(screenName: String, data: ReadableMap?) {
-        dashXClient?.screen(screenName, MapUtil.toMap(data) as HashMap<String, String>)
+        dashXClient?.screen(screenName, data?.toHashMap() as HashMap<String, String>)
     }
 
     @ReactMethod
@@ -176,6 +176,21 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
     @ReactMethod
     fun fetchStoredPreferences(promise: Promise) {
         dashXClient?.fetchStoredPreferences(
+            onError = {
+                promise.reject("EUNSPECIFIED", it)
+            },
+            onSuccess = { content ->
+                promise.resolve(convertJsonToMap(content))
+            }
+        )
+    }
+
+    @ReactMethod
+    fun saveStoredPreferences(preferenceData: ReadableMap?, promise: Promise) {
+        val preferencesHashMap = MapUtil.toJSONElement(preferenceData)
+
+        dashXClient?.saveStoredPreferences(
+            preferencesHashMap,
             onError = {
                 promise.reject("EUNSPECIFIED", it)
             },

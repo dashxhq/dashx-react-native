@@ -16,6 +16,8 @@ const {
 	uploadExternalAsset,
 	prepareExternalAsset,
 	externalAsset,
+	fetchStoredPreferences,
+	saveStoredPreferences,
 } = DashX;
 
 DashX.identify = (options) => {
@@ -60,6 +62,14 @@ DashX.prepareExternalAsset = (externalColumnId) => {
 
 DashX.externalAsset = (assetId) => {
 	return externalAsset(assetId);
+};
+
+DashX.fetchStoredPreferences = () => {
+	return fetchStoredPreferences();
+};
+
+DashX.saveStoredPreferences = (preferenceData) => {
+	return saveStoredPreferences(preferenceData);
 };
 
 DashX.onMessageReceived = (callback) => {

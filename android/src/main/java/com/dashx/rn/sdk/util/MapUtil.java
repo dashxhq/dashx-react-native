@@ -32,6 +32,9 @@ import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.facebook.react.bridge.ReadableType;
 import com.facebook.react.bridge.WritableMap;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
 
 import java.util.Map;
 import java.util.HashMap;
@@ -43,38 +46,9 @@ import org.json.JSONException;
 
 public class MapUtil {
 
-  public static JSONObject toJSONObject(ReadableMap readableMap) throws JSONException {
-    JSONObject jsonObject = new JSONObject();
-
-    ReadableMapKeySetIterator iterator = readableMap.keySetIterator();
-
-    while (iterator.hasNextKey()) {
-      String key = iterator.nextKey();
-      ReadableType type = readableMap.getType(key);
-
-      switch (type) {
-        case Null:
-          jsonObject.put(key, null);
-          break;
-        case Boolean:
-          jsonObject.put(key, readableMap.getBoolean(key));
-          break;
-        case Number:
-          jsonObject.put(key, readableMap.getDouble(key));
-          break;
-        case String:
-          jsonObject.put(key, readableMap.getString(key));
-          break;
-        case Map:
-          jsonObject.put(key, MapUtil.toJSONObject(readableMap.getMap(key)));
-          break;
-        case Array:
-          jsonObject.put(key, ArrayUtil.toJSONArray(readableMap.getArray(key)));
-          break;
-      }
-    }
-
-    return jsonObject;
+  public static JsonElement toJSONElement(ReadableMap readableMap) throws JSONException {
+    HashMap<String, Object> hashMap = readableMap.toHashMap();
+    return new Gson().toJsonTree(hashMap);
   }
 
   public static Map<String, Object> toMap(JSONObject jsonObject) throws JSONException {

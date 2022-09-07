@@ -43,38 +43,6 @@ import org.json.JSONObject;
 import org.json.JSONException;
 
 public class ArrayUtil {
-
-  public static JSONArray toJSONArray(ReadableArray readableArray) throws JSONException {
-    JSONArray jsonArray = new JSONArray();
-
-    for (int i = 0; i < readableArray.size(); i++) {
-      ReadableType type = readableArray.getType(i);
-
-      switch (type) {
-        case Null:
-          jsonArray.put(i, null);
-          break;
-        case Boolean:
-          jsonArray.put(i, readableArray.getBoolean(i));
-          break;
-        case Number:
-          jsonArray.put(i, readableArray.getDouble(i));
-          break;
-        case String:
-          jsonArray.put(i, readableArray.getString(i));
-          break;
-        case Map:
-          jsonArray.put(i, MapUtil.toJSONObject(readableArray.getMap(i)));
-          break;
-        case Array:
-          jsonArray.put(i, ArrayUtil.toJSONArray(readableArray.getArray(i)));
-          break;
-      }
-    }
-
-    return jsonArray;
-  }
-
   public static Object[] toArray(JSONArray jsonArray) throws JSONException {
     Object[] array = new Object[jsonArray.length()];
 

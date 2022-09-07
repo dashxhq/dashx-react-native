@@ -18,6 +18,7 @@ RCT_EXTERN_METHOD(fetchContent:(NSString *)urn options:(NSDictionary *)options r
 RCT_EXTERN_METHOD(addItemToCart:(NSString *)itemId pricingId:(NSString *)pricingId quantity:(NSString *)quantity reset:(BOOL)reset custom:(NSDictionary *)custom resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 RCT_EXTERN_METHOD(fetchCart:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 RCT_EXTERN_METHOD(fetchStoredPreferences:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
+RCT_EXTERN_METHOD(saveStoredPreferences:(NSDictionary *)preferenceData resolve:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 RCT_EXTERN_METHOD(uploadExternalAsset:(NSDictionary *)file externalColumnId:(NSString *)externalColumnId resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 RCT_EXTERN_METHOD(externalAsset:(NSString *)assetId resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 RCT_EXTERN_METHOD(subscribe)

@@ -92,7 +92,6 @@ class DashXReactNative: RCTEventEmitter {
 
     @objc(addItemToCart:pricingId:quantity:reset:custom:resolver:rejecter:)
     func addItemToCart(_ itemId: String, _ pricingId: String, _ quantity: String, _ reset: Bool, _ custom: NSDictionary?, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
-
         dashXClient.addItemToCart(
             itemId: itemId,
             pricingId: pricingId,
@@ -106,7 +105,6 @@ class DashXReactNative: RCTEventEmitter {
 
     @objc(fetchCart:rejecter:)
     func fetchCart(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
-
         dashXClient.fetchCart(
             successCallback: CBU.resolveToSuccessCallback(resolve),
             failureCallback: CBU.rejectToFailureCallback(reject)
@@ -115,12 +113,21 @@ class DashXReactNative: RCTEventEmitter {
 
     @objc(fetchStoredPreferences:rejecter:)
     func fetchStoredPreferences(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
-
         dashXClient.fetchStoredPreferences(
             successCallback: CBU.resolveToSuccessCallback(resolve),
             failureCallback: CBU.rejectToFailureCallback(reject)
         )
     }
+
+    @objc(saveStoredPreferences:resolve:rejecter:)
+    func saveStoredPreferences(_ preferenceData: NSDictionary, _ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+        dashXClient.saveStoredPreferences(
+            preferenceData: preferenceData,
+            successCallback: CBU.resolveToSuccessCallback(resolve),
+            failureCallback: CBU.rejectToFailureCallback(reject)
+        )
+    }
+
 
     @objc(uploadExternalAsset:externalColumnId:resolver:rejecter:)
     func uploadExternalAsset(_ file: NSDictionary, _ externalColumnId: String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
