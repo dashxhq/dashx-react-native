@@ -1,8 +1,0 @@
-mutation EditContent($input: EditContentInput!) {
-    editContent(input: $input) {
-        id
-        position
-        identifier
-        data
-    }
-}

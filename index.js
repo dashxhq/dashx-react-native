@@ -1,48 +1,79 @@
-import { NativeEventEmitter, NativeModules } from 'react-native'
+import { NativeEventEmitter, NativeModules } from "react-native";
+import { parseFilterObject, toContentSingleton } from "./utils";
 
-import ContentOptionsBuilder from './ContentOptionsBuilder'
-import { parseFilterObject, toContentSingleton } from './utils'
+import ContentOptionsBuilder from "./ContentOptionsBuilder";
 
-const { DashX } = NativeModules
-const dashXEventEmitter = new NativeEventEmitter(DashX)
+const { DashXReactNative: DashX } = NativeModules;
 
-const { identify, track, fetchContent, searchContent } = DashX
+const dashXEventEmitter = new NativeEventEmitter(DashX);
 
-// Handle overloads at JS, because Native modules doesn't allow that
-// https://github.com/facebook/react-native/issues/19116
+const {
+	identify,
+	setIdentity,
+	track,
+	fetchContent,
+	searchContent,
+	uploadExternalAsset,
+	prepareExternalAsset,
+	externalAsset,
+	fetchStoredPreferences,
+	saveStoredPreferences,
+} = DashX;
+
 DashX.identify = (options) => {
-  if (typeof options === 'string') {
-    return identify(options, null) // options is a string ie. uid
-  } else {
-    return identify(null, options)
-  }
-}
+	return identify(options);
+};
 
-DashX.track = (event, data) => track(event, data || null)
+DashX.setIdentity = (uid, token) => {
+	return setIdentity(uid, token);
+};
+
+DashX.track = (event, data) => track(event, data || null);
 
 DashX.searchContent = (contentType, options) => {
-  if (!options) {
-    return new ContentOptionsBuilder(
-      (wrappedOptions) => searchContent(contentType, wrappedOptions)
-    )
-  }
+	if (!options) {
+		return new ContentOptionsBuilder((wrappedOptions) =>
+			searchContent(contentType, wrappedOptions)
+		);
+	}
 
-  const filter = parseFilterObject(options.filter)
+	const filter = parseFilterObject(options.filter);
 
-  const result = searchContent(contentType, { ...options, filter })
+	const result = searchContent(contentType, { ...options, filter });
 
-  if (options.returnType === 'all') {
-    return result
-  }
+	if (options.returnType === "all") {
+		return result;
+	}
 
-  return result.then(toContentSingleton)
-}
+	return result.then(toContentSingleton);
+};
 
 DashX.fetchContent = (contentType, options) => {
-  return fetchContent(contentType, options)
-}
+	return fetchContent(contentType, options);
+};
 
-DashX.onMessageReceived = (callback) =>
-  dashXEventEmitter.addListener('messageReceived', callback)
+DashX.uploadExternalAsset = (file, externalColumnId) => {
+	return uploadExternalAsset(file, externalColumnId);
+};
 
-export default DashX
+DashX.prepareExternalAsset = (externalColumnId) => {
+	return prepareExternalAsset(externalColumnId);
+};
+
+DashX.externalAsset = (assetId) => {
+	return externalAsset(assetId);
+};
+
+DashX.fetchStoredPreferences = () => {
+	return fetchStoredPreferences();
+};
+
+DashX.saveStoredPreferences = (preferenceData) => {
+	return saveStoredPreferences(preferenceData);
+};
+
+DashX.onMessageReceived = (callback) => {
+	dashXEventEmitter.addListener("messageReceived", callback);
+};
+
+export default DashX;

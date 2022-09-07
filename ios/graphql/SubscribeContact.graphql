@@ -1,6 +1,0 @@
-mutation SubscribeContact($input: SubscribeContactInput!) {
-    subscribeContact(input: $input) {
-        id
-        value
-    }
-}

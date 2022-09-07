@@ -1,6 +1,6 @@
 @file:JvmName("Utils")
 
-package com.dashx.rn.sdk
+package com.dashx.rn.sdk.util
 
 import com.facebook.react.bridge.*
 import com.google.gson.JsonArray
@@ -45,8 +45,8 @@ fun convertArrayToJson(readableArray: ReadableArray?): JsonArray {
 @JvmOverloads
 @Throws(Exception::class)
 fun convertToWritableMap(
-    map: Map<*, *>,
-    blacklist: List<String> = emptyList<String>()
+        map: Map<*, *>,
+        blacklist: List<String> = emptyList<String>()
 ): WritableMap {
     val writableMap: WritableMap = WritableNativeMap()
     val iterator: Iterator<String> = map.keys.iterator() as Iterator<String>
@@ -54,7 +54,7 @@ fun convertToWritableMap(
         val key = iterator.next()
 
         if (blacklist.contains(key)) {
-            continue;
+            continue
         }
 
         when (val value = map[key]) {
