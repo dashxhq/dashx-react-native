@@ -18,7 +18,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dashxhq/dashx-react-native"
+    "url": "https://github.com/dashxhq/dashx-react-native"
   },
   "keywords": [
     "react-native"
@@ -35,5 +35,8 @@
   "devDependencies": {
     "eslint": "^8.21.0",
     "eslint-plugin-react": "^7.30.1"
+  },
+  "dependencies": {
+    "react-native-get-real-path": "github:Wraptime/react-native-get-real-path"
   }
 }
