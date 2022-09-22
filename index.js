@@ -1,5 +1,6 @@
 import { NativeEventEmitter, NativeModules } from "react-native";
 import { parseFilterObject, toContentSingleton } from "./utils";
+import { getRealPathFromURI } from "react-native-get-real-path";
 
 import ContentOptionsBuilder from "./ContentOptionsBuilder";
 
@@ -52,8 +53,13 @@ DashX.fetchContent = (contentType, options) => {
 	return fetchContent(contentType, options);
 };
 
-DashX.uploadExternalAsset = (file, externalColumnId) => {
-	return uploadExternalAsset(file, externalColumnId);
+DashX.uploadExternalAsset = async (file, externalColumnId) => {
+  // Convert content uri to file uri
+  if (file.uri.startsWith("content://")) {
+    file.uri = `file://${await getRealPathFromURI(file.uri)}`;
+  }
+
+  return uploadExternalAsset(file, externalColumnId);
 };
 
 DashX.prepareExternalAsset = (externalColumnId) => {
