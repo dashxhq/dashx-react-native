@@ -31,7 +31,7 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
 
     @ReactMethod
     fun configure(options: ReadableMap) {
-        dashXClient = DashX.createInstance(
+        dashXClient = DashX.configure(
             reactContext,
             options.getString("publicKey")!!,
             options.getStringIfPresent("baseURI"),
@@ -187,10 +187,10 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
 
     @ReactMethod
     fun saveStoredPreferences(preferenceData: ReadableMap?, promise: Promise) {
-        val preferencesHashMap = MapUtil.toJSONElement(preferenceData)
+        val preferencesString = MapUtil.toJSONElement(preferenceData).toString()
 
         dashXClient?.saveStoredPreferences(
-            preferencesHashMap,
+            preferencesString,
             onError = {
                 promise.reject("EUNSPECIFIED", it)
             },
@@ -220,23 +220,6 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
         dashXClient?.uploadExternalAsset(
             fileObject,
             externalColumnId,
-            onError = {
-                promise.reject("EUNSPECIFIED", it)
-            },
-            onSuccess = { content ->
-                val jsonObject = Gson().toJsonTree(content, ExternalAsset::class.java).asJsonObject
-                promise.resolve(convertJsonToMap(jsonObject))
-            }
-        )
-    }
-
-    @ReactMethod
-    fun externalAsset(
-            id: String,
-            promise: Promise
-    ) {
-        dashXClient?.externalAsset(
-            id,
             onError = {
                 promise.reject("EUNSPECIFIED", it)
             },
