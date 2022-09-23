@@ -45,5 +45,5 @@ dependencies {
     implementation 'com.facebook.react:react-native:+'
     implementation 'com.google.code.gson:gson:2.9.0'
 
-    implementation "com.dashx:dashx-android:1.0.3"
+    implementation "com.dashx:dashx-android:1.0.4"
 }  
