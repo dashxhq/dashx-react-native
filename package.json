@@ -1,7 +1,7 @@
 {
   "name": "@dashx/react-native",
   "title": "DashX React Native",
-  "version": "0.1.23",
+  "version": "1.0.2",
   "description": "DashX SDK for React Native",
   "main": "index.js",
   "files": [
@@ -18,31 +18,25 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dashxhq/dashx-react-native"
+    "url": "https://github.com/dashxhq/dashx-react-native"
   },
   "keywords": [
     "react-native"
   ],
   "author": {
-    "name": "DashxDev",
+    "name": "DashXDev",
     "email": "dev@dashx.com"
   },
   "license": "MIT",
   "licenseFilename": "LICENSE",
-  "readmeFilename": "README.md",
   "peerDependencies": {
-    "react": "^16.8.1",
-    "react-native": ">=0.59.0-rc.0 <1.0.x"
+    "react-native": "^0.41.2"
   },
   "devDependencies": {
     "eslint": "^8.21.0",
-    "eslint-plugin-react": "^7.30.1",
-    "get-file-object-from-local-path": "^1.0.2",
-    "react": "^16.11.0",
-    "react-native": "^0.62.0-rc.2"
+    "eslint-plugin-react": "^7.30.1"
   },
   "dependencies": {
-    "axios": "^0.27.2",
-    "rn-fetch-blob": "^0.12.0"
+    "react-native-get-real-path": "github:Wraptime/react-native-get-real-path"
   }
 }

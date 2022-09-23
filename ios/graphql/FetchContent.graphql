@@ -1,3 +1,0 @@
-query FetchContent($input: FetchContentInput!) {
-  fetchContent(input: $input)
-}

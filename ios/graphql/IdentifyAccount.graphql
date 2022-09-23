@@ -1,5 +1,0 @@
-mutation IdentifyAccount($input: IdentifyAccountInput!) {
-    identifyAccount(input: $input) {
-        id
-    }
-}

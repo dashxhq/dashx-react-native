@@ -1,3 +1,4 @@
+
 # OSX
 #
 .DS_Store
@@ -7,6 +8,7 @@
 node_modules/
 npm-debug.log
 yarn-error.log
+  
 
 # Xcode
 #
@@ -27,28 +29,20 @@ DerivedData
 *.ipa
 *.xcuserstate
 project.xcworkspace
+      
 
-# Android/IntelliJ/VSCode
+# Android/IntelliJ
 #
 build/
 .idea
 .gradle
 local.properties
 *.iml
-.classpath
-.project
-.vscode
 
 # BUCK
-#
 buck-out/
 \.buckd/
 *.keystore
 
-# Build
-#
-dist
-
-# Environment Variables
-#
-.env
+# VS Code
+.vscode/
