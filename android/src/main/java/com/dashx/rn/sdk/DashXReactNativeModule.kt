@@ -1,15 +1,12 @@
 package com.dashx.rn.sdk
 
-import android.annotation.TargetApi
-import android.content.Context
-import android.database.Cursor
+import android.content.pm.PackageInfo
+import android.content.pm.PackageManager.NameNotFoundException
 import android.net.Uri
-import android.os.Build
-import android.provider.DocumentsContract
-import android.provider.MediaStore
 import com.dashx.rn.sdk.util.*
 import com.dashx.sdk.DashXLog
 import com.dashx.sdk.data.ExternalAsset
+import com.dashx.sdk.data.LibraryInfo
 import com.facebook.react.bridge.*
 import com.google.gson.Gson
 import java.io.File
@@ -35,14 +32,15 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
             reactContext,
             options.getString("publicKey")!!,
             options.getStringIfPresent("baseURI"),
-            options.getStringIfPresent("targetEnvironment")
+            options.getStringIfPresent("targetEnvironment"),
+            LibraryInfo("dashx-react-native", BuildConfig.VERSION_NAME)
         )
     }
 
     @ReactMethod
     fun identify(options: ReadableMap?) {
-        val optionsHashMap = options?.toHashMap()
-        dashXClient?.identify(optionsHashMap as HashMap<String, String>?)
+//        val optionsHashMap = options?.()
+        dashXClient?.identify(options as HashMap<String, String>?)
     }
 
     @ReactMethod
@@ -58,7 +56,7 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
     @ReactMethod
     fun track(event: String, data: ReadableMap?) {
         val jsonData = try {
-            data?.toHashMap() as HashMap<String, String>
+            data as HashMap<String, String>
         } catch (e: Exception) {
             DashXLog.d(tag, e.message)
             return
@@ -69,7 +67,7 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
 
     @ReactMethod
     fun screen(screenName: String, data: ReadableMap?) {
-        dashXClient?.screen(screenName, data?.toHashMap() as HashMap<String, String>)
+        dashXClient?.screen(screenName, data as HashMap<String, String>)
     }
 
     @ReactMethod

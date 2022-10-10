@@ -1,7 +1,8 @@
+import groovy.json.JsonSlurper
 
 buildscript {
     ext {
-        kotlinVersion = '1.5.31'
+        kotlinVersion = '1.6.0'
         androidToolsVersion = '7.0.4'
     }
 
@@ -19,6 +20,15 @@ buildscript {
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
+def getVersionFromNpm() {
+    //  Read and parse package.json file from project root
+    def inputFile = new File("$rootDir/../package.json")
+    def packageJson = new JsonSlurper().parseText(inputFile.text)
+
+    // Return the version, you can get any value this way
+    return packageJson["version"]
+}
+
 android {
     compileSdkVersion 30
     buildToolsVersion '28.0.3'
@@ -28,7 +38,9 @@ android {
         targetSdkVersion 30
         compileSdkVersion 30
         versionCode 1
-        versionName "1.0"
+        versionName getVersionFromNpm()
+
+        buildConfigField 'String', 'VERSION_NAME', "\"$versionName\""
     }
     lintOptions {
         abortOnError false
@@ -45,5 +57,5 @@ dependencies {
     implementation 'com.facebook.react:react-native:+'
     implementation 'com.google.code.gson:gson:2.9.0'
 
-    implementation "com.dashx:dashx-android:1.0.4"
+    implementation "com.dashx:dashx-android:1.0.7"
 }  

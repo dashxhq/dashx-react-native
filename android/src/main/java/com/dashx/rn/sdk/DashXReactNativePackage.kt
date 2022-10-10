@@ -12,6 +12,10 @@ class DashXPackage : ReactPackage {
         return Arrays.asList<NativeModule>(DashXReactNativeModule(reactContext))
     }
 
+    override fun createJSModules(): MutableList<Class<out JavaScriptModule>> {
+        return mutableListOf()
+    }
+
     override fun createViewManagers(reactContext: ReactApplicationContext): List<ViewManager<*, *>> {
         return emptyList()
     }
