@@ -22,7 +22,7 @@ apply plugin: 'kotlin-android'
 
 def getVersionFromNpm() {
     //  Read and parse package.json file from project root
-    def inputFile = new File("$rootDir/../package.json")
+    def inputFile = new File("../node_modules/@dashx/react-native/package.json")
     def packageJson = new JsonSlurper().parseText(inputFile.text)
 
     // Return the version, you can get any value this way
