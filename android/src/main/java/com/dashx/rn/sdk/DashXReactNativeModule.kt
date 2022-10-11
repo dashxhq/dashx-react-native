@@ -39,8 +39,8 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
 
     @ReactMethod
     fun identify(options: ReadableMap?) {
-//        val optionsHashMap = options?.()
-        dashXClient?.identify(options as HashMap<String, String>?)
+        val optionsHashMap = options?.toHashMap()
+        dashXClient?.identify(optionsHashMap as HashMap<String, String>?)
     }
 
     @ReactMethod
@@ -56,7 +56,7 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
     @ReactMethod
     fun track(event: String, data: ReadableMap?) {
         val jsonData = try {
-            data as HashMap<String, String>
+            data?.toHashMap() as HashMap<String, String>
         } catch (e: Exception) {
             DashXLog.d(tag, e.message)
             return
@@ -67,7 +67,7 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
 
     @ReactMethod
     fun screen(screenName: String, data: ReadableMap?) {
-        dashXClient?.screen(screenName, data as HashMap<String, String>)
+        dashXClient?.screen(screenName, data?.toHashMap() as HashMap<String, String>)
     }
 
     @ReactMethod

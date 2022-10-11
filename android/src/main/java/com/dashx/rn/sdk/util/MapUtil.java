@@ -47,7 +47,7 @@ import org.json.JSONException;
 public class MapUtil {
 
   public static JsonElement toJSONElement(ReadableMap readableMap) throws JSONException {
-    HashMap<String, Object> hashMap = (HashMap<String, Object>) readableMap;//.toHashMap();
+    HashMap<String, Object> hashMap = readableMap.toHashMap();
     return new Gson().toJsonTree(hashMap);
   }
 

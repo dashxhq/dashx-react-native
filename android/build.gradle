@@ -25,7 +25,6 @@ def getVersionFromNpm() {
     def inputFile = new File("../node_modules/@dashx/react-native/package.json")
     def packageJson = new JsonSlurper().parseText(inputFile.text)
 
-    // Return the version, you can get any value this way
     return packageJson["version"]
 }
 
