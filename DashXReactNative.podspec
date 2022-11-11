@@ -13,7 +13,7 @@ Pod::Spec.new do |s|
   # brief license entry:
   s.license      = "MIT"
   s.authors      = { "DashXDev" => "dev@dashx.com" }
-  s.platforms    = { :ios => "10.0" }
+  s.platforms    = { :ios => "12.0" }
   s.source       = { :git => "https://github.com/dashxhq/dashx-react-native.git", :tag => "#{s.version}" }
 
   s.source_files = "ios/**/*.{h,c,m,swift}"
