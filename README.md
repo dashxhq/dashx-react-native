@@ -127,3 +127,12 @@ For the next steps, please follow the guide for the respective platform:
 
 - [Android](android/README.md)
 - [iOS](ios/README.md)
+
+## Publishing
+
+Simply use `yarn publish` to bump the version & release. Once done, push the commit that yarn adds to GitHub:
+
+```sh
+$ yarn publish
+$ git push origin main
+```
