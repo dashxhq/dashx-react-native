@@ -1,15 +1,12 @@
 package com.dashx.rn.sdk
 
-import android.annotation.TargetApi
-import android.content.Context
-import android.database.Cursor
+import android.content.pm.PackageInfo
+import android.content.pm.PackageManager.NameNotFoundException
 import android.net.Uri
-import android.os.Build
-import android.provider.DocumentsContract
-import android.provider.MediaStore
 import com.dashx.rn.sdk.util.*
 import com.dashx.sdk.DashXLog
 import com.dashx.sdk.data.ExternalAsset
+import com.dashx.sdk.data.LibraryInfo
 import com.facebook.react.bridge.*
 import com.google.gson.Gson
 import java.io.File
@@ -35,7 +32,8 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
             reactContext,
             options.getString("publicKey")!!,
             options.getStringIfPresent("baseURI"),
-            options.getStringIfPresent("targetEnvironment")
+            options.getStringIfPresent("targetEnvironment"),
+            LibraryInfo("dashx-react-native", BuildConfig.VERSION_NAME)
         )
     }
 
