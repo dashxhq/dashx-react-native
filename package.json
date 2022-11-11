@@ -11,7 +11,7 @@
     "ContentOptionsBuilder.js",
     "utils.js",
     "ios",
-    "DashX.podspec"
+    "DashXReactNative.podspec"
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
