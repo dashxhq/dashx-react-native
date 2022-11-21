@@ -200,8 +200,8 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
 
     @ReactMethod
     fun uploadExternalAsset(
-        file: ReadableMap, 
-        externalColumnId: String, 
+        file: ReadableMap,
+        externalColumnId: String,
         promise: Promise
     ) {
         val jsonFile = try {
