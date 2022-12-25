@@ -19,6 +19,7 @@ const {
 	externalAsset,
 	fetchStoredPreferences,
 	saveStoredPreferences,
+	subscribe
 } = DashX;
 
 DashX.identify = (options) => {
@@ -28,6 +29,10 @@ DashX.identify = (options) => {
 DashX.setIdentity = (uid, token) => {
 	return setIdentity(uid, token);
 };
+
+DashX.subscribe = () => {
+	return subscribe();
+}
 
 DashX.track = (event, data) => track(event, data || null);
 
