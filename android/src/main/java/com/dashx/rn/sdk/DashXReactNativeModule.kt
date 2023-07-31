@@ -4,14 +4,16 @@ import android.content.pm.PackageInfo
 import android.content.pm.PackageManager.NameNotFoundException
 import android.net.Uri
 import com.dashx.rn.sdk.util.*
+import com.dashx.sdk.DashXClient as DashX
 import com.dashx.sdk.DashXLog
-import com.dashx.sdk.data.ExternalAsset
+import com.dashx.sdk.DashXLog.LogLevel
 import com.dashx.sdk.data.LibraryInfo
 import com.facebook.react.bridge.*
-import com.google.gson.Gson
 import java.io.File
-import com.dashx.sdk.DashXClient as DashX
-
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 
 class DashXReactNativeModule(private val reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
     private val tag = DashXReactNativeModule::class.java.simpleName
@@ -22,7 +24,7 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
     }
 
     @ReactMethod
-    fun setLogLevel(logLevel: Int) {
+    fun setLogLevel(logLevel: LogLevel) {
         DashXLog.setLogLevel(logLevel)
     }
 
@@ -83,7 +85,7 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
                 promise.reject("EUNSPECIFIED", it)
             },
             onSuccess = {
-                promise.resolve(convertJsonToMap(it))
+                promise.resolve(convertJsonToMap(convertKJsonToJson(it)))
             }
         )
     }
@@ -107,8 +109,8 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
         dashXClient?.searchContent(
             contentType,
             options?.getString("returnType") ?: "all",
-            jsonFilter,
-            jsonOrder,
+            convertJsonToKJson(jsonFilter),
+            convertJsonToKJson(jsonOrder),
             options?.getIntIfPresent("limit"),
             options?.getBooleanIfPresent("preview"),
             options?.getStringIfPresent("language"),
@@ -121,7 +123,7 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
             onSuccess = { content ->
                 val readableArray = Arguments.createArray()
                 content.forEach {
-                    readableArray.pushMap(convertJsonToMap(it))
+                    readableArray.pushMap(convertJsonToMap(convertKJsonToJson(it)))
                 }
                 promise.resolve(readableArray)
             }
@@ -149,12 +151,12 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
             pricingId,
             quantity,
             reset ?: false,
-            jsonCustom,
+            convertJsonToKJson(jsonCustom),
             onError = {
                 promise.reject("EUNSPECIFIED", it)
             },
             onSuccess = { content ->
-                promise.resolve(convertJsonToMap(content))
+                promise.resolve(convertJsonToMap(convertKJsonToJson(Json.decodeFromString<JsonObject>(Json.encodeToString(content)))))
             }
         )
     }
@@ -166,7 +168,7 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
                 promise.reject("EUNSPECIFIED", it)
             },
             onSuccess = { content ->
-                promise.resolve(convertJsonToMap(content))
+                promise.resolve(convertJsonToMap(convertKJsonToJson(Json.decodeFromString<JsonObject>(Json.encodeToString(content)))))
             }
         )
     }
@@ -178,7 +180,7 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
                 promise.reject("EUNSPECIFIED", it)
             },
             onSuccess = { content ->
-                promise.resolve(convertJsonToMap(content))
+                promise.resolve(convertJsonToMap(convertKJsonToJson(Json.decodeFromString<JsonObject>(Json.encodeToString(content)))))
             }
         )
     }
@@ -188,42 +190,12 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
         val preferencesString = MapUtil.toJSONElement(preferenceData).toString()
 
         dashXClient?.saveStoredPreferences(
-            preferencesString,
+            Json.decodeFromString<JsonObject>(preferencesString),
             onError = {
                 promise.reject("EUNSPECIFIED", it)
             },
             onSuccess = { content ->
-                promise.resolve(convertJsonToMap(content))
-            }
-        )
-    }
-
-    @ReactMethod
-    fun uploadExternalAsset(
-        file: ReadableMap,
-        externalColumnId: String,
-        promise: Promise
-    ) {
-        val jsonFile = try {
-            convertMapToJson(file)
-        } catch (e: Exception) {
-            DashXLog.d(tag, e.message)
-            throw Exception("Encountered an error while parsing file")
-        }
-
-        // Remove unnecessary double quotes from RN URI
-        val filePath = getFilePathFromURIString(jsonFile?.get("uri").toString())
-        val fileObject = File(filePath)
-
-        dashXClient?.uploadExternalAsset(
-            fileObject,
-            externalColumnId,
-            onError = {
-                promise.reject("EUNSPECIFIED", it)
-            },
-            onSuccess = { content ->
-                val jsonObject = Gson().toJsonTree(content, ExternalAsset::class.java).asJsonObject
-                promise.resolve(convertJsonToMap(jsonObject))
+                promise.resolve(convertJsonToMap(convertKJsonToJson(Json.decodeFromString<JsonObject>(Json.encodeToString(content)))))
             }
         )
     }
@@ -237,9 +209,14 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
     fun getFilePathFromURIString(contentUriString: String): String {
         val sanitizedURI = contentUriString.replace("\"", "")
         val path = Uri.parse(sanitizedURI).path
+        val index = path?.indexOf(':')
+
+        if (index == null) {
+            return ""
+        }
 
         // Remove unnecessary URI component
-        val filePath = path!!.substring(path?.indexOf(':') + 1)
+        val filePath = path!!.substring(index!! + 1)
 
         return filePath
     }
