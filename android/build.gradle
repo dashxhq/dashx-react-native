@@ -2,7 +2,7 @@ import groovy.json.JsonSlurper
 
 buildscript {
     ext {
-        kotlinVersion = '1.6.0'
+        kotlinVersion = '1.8.0'
         androidToolsVersion = '7.0.4'
     }
 
@@ -55,6 +55,7 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:${project.ext.kotlinVersion}"
     implementation 'com.facebook.react:react-native:+'
     implementation 'com.google.code.gson:gson:2.9.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0'
 
-    implementation "com.dashx:dashx-android:1.0.8"
+    implementation "com.dashx:dashx-android:1.0.13"
 }

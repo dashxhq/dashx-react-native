@@ -3,9 +3,28 @@
 package com.dashx.rn.sdk.util
 
 import com.facebook.react.bridge.*
+import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject as KJsonObject
 import org.json.JSONException
+import kotlinx.serialization.decodeFromString
+
+fun convertKJsonToJson(kotlinxJsonObject: KJsonObject): JsonObject {
+    val jsonString = Json.encodeToString(kotlinxJsonObject)
+    return Gson().fromJson(jsonString, JsonObject::class.java)
+}
+
+fun convertJsonToKJson(jsonObject: JsonObject?): KJsonObject? {
+    if (jsonObject == null) {
+        return null
+    }
+
+    val jsonString = jsonObject.toString()
+    return Json.decodeFromString(jsonString)
+}
 
 @Throws(JSONException::class)
 fun convertMapToJson(readableMap: ReadableMap?): JsonObject? {
