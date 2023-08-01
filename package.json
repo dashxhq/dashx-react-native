@@ -5,13 +5,26 @@
   "description": "DashX SDK for React Native",
   "main": "index.js",
   "files": [
-    "README.md",
+    "!**/__fixtures__",
+    "!**/__mocks__",
+    "!**/__tests__",
+    "!**/.*",
+    "!android/build",
+    "!android/gradle",
+    "!android/gradlew.bat",
+    "!android/gradlew",
+    "!android/local.properties",
+    "!ios/build",
+    "!lib/typescript/example",
+    "*.podspec",
     "android",
-    "index.js",
     "ContentOptionsBuilder.js",
-    "utils.js",
+    "cpp",
+    "DashXReactNative.podspec",
+    "index.js",
     "ios",
-    "DashXReactNative.podspec"
+    "README.md",
+    "utils.js"
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -21,7 +34,9 @@
     "url": "https://github.com/dashxhq/dashx-react-native"
   },
   "keywords": [
-    "react-native"
+    "react-native",
+    "ios",
+    "android"
   ],
   "author": {
     "name": "DashXDev",
@@ -29,14 +44,56 @@
   },
   "license": "MIT",
   "licenseFilename": "LICENSE",
+  "homepage": "https://github.com/dashxhq/dashx-react-native#readme",
   "peerDependencies": {
-    "react-native": "^0.41.2"
+    "react": "*",
+    "react-native": "*"
   },
   "devDependencies": {
-    "eslint": "^8.21.0",
-    "eslint-plugin-react": "^7.30.1"
+    "eslint": "^8.4.1",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "pod-install": "^0.1.0",
+    "prettier": "^2.0.5",
+    "react": "18.2.0",
+    "react-native": "0.72.3",
+    "react-native-builder-bob": "^0.21.3"
   },
+  "engines": {
+    "node": ">= 16.0.0"
+  },
+  "packageManager": "^yarn@1.22.15",
   "dependencies": {
     "react-native-get-real-path": "github:Wraptime/react-native-get-real-path"
+  },
+  "eslintConfig": {
+    "root": true,
+    "extends": [
+      "@react-native-community",
+      "prettier"
+    ],
+    "rules": {
+      "prettier/prettier": [
+        "error",
+        {
+          "quoteProps": "consistent",
+          "singleQuote": true,
+          "tabWidth": 2,
+          "trailingComma": "es5",
+          "useTabs": false
+        }
+      ]
+    }
+  },
+  "eslintIgnore": [
+    "node_modules/",
+    "lib/"
+  ],
+  "prettier": {
+    "quoteProps": "consistent",
+    "singleQuote": true,
+    "tabWidth": 2,
+    "trailingComma": "es5",
+    "useTabs": false
   }
 }
