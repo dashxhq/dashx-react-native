@@ -7,9 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		7C3CFED5289B9C6E00D184AB /* DashX.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C3CFED3289B9C6E00D184AB /* DashX.swift */; };
-		7C3CFED6289B9C6E00D184AB /* DashXEventEmitter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C3CFED4289B9C6E00D184AB /* DashXEventEmitter.swift */; };
-		B3E7B58A1CC2AC0600A0062D /* DashXReactNative.m in Sources */ = {isa = PBXBuildFile; fileRef = B3E7B5891CC2AC0600A0062D /* DashXReactNative.m */; };
+		5124AEE72A7A25120079E503 /* DashXReactNative.m in Sources */ = {isa = PBXBuildFile; fileRef = B3E7B5891CC2AC0600A0062D /* DashXReactNative.m */; };
+		5124AEE82A7A25120079E503 /* DashX.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C3CFED3289B9C6E00D184AB /* DashX.swift */; };
+		5124AEE92A7A25120079E503 /* DashXEventEmitter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C3CFED4289B9C6E00D184AB /* DashXEventEmitter.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -122,9 +122,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				7C3CFED5289B9C6E00D184AB /* DashX.swift in Sources */,
-				7C3CFED6289B9C6E00D184AB /* DashXEventEmitter.swift in Sources */,
-				B3E7B58A1CC2AC0600A0062D /* DashXReactNative.m in Sources */,
+				5124AEE72A7A25120079E503 /* DashXReactNative.m in Sources */,
+				5124AEE82A7A25120079E503 /* DashX.swift in Sources */,
+				5124AEE92A7A25120079E503 /* DashXEventEmitter.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

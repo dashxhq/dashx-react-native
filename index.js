@@ -1,26 +1,37 @@
-import { NativeEventEmitter, NativeModules } from "react-native";
-import { parseFilterObject, toContentSingleton } from "./utils";
-import { getRealPathFromURI } from "react-native-get-real-path";
+import { NativeModules, Platform } from 'react-native';
 
-import ContentOptionsBuilder from "./ContentOptionsBuilder";
+const LINKING_ERROR =
+  `The package 'dashx-react-native' doesn't seem to be linked. Make sure: \n\n` +
+  Platform.select({ ios: "- You have run 'pod install'\n", default: '' }) +
+  '- You rebuilt the app after installing the package\n' +
+  '- You are not using Expo Go\n';
 
-const { DashXReactNative: DashX } = NativeModules;
-
-const dashXEventEmitter = new NativeEventEmitter(DashX);
+const DashX = NativeModules.DashXReactNative
+  ? NativeModules.DashXReactNative
+  : new Proxy(
+      {},
+      {
+        get() {
+          throw new Error(LINKING_ERROR);
+        },
+      }
+    );
 
 const {
+	configure,
 	identify,
 	setIdentity,
+	reset,
 	track,
-	fetchContent,
-	searchContent,
-	uploadExternalAsset,
-	prepareExternalAsset,
-	externalAsset,
+	screen,
 	fetchStoredPreferences,
 	saveStoredPreferences,
 	subscribe
 } = DashX;
+
+DashX.configure = (options) => {
+	return configure(options);
+}
 
 DashX.identify = (options) => {
 	return identify(options);
@@ -30,50 +41,13 @@ DashX.setIdentity = (uid, token) => {
 	return setIdentity(uid, token);
 };
 
-DashX.subscribe = () => {
-	return subscribe();
+DashX.reset = () => {
+	return reset();
 }
 
 DashX.track = (event, data) => track(event, data || null);
 
-DashX.searchContent = (contentType, options) => {
-	if (!options) {
-		return new ContentOptionsBuilder((wrappedOptions) =>
-			searchContent(contentType, wrappedOptions)
-		);
-	}
-
-	const filter = parseFilterObject(options.filter);
-
-	const result = searchContent(contentType, { ...options, filter });
-
-	if (options.returnType === "all") {
-		return result;
-	}
-
-	return result.then(toContentSingleton);
-};
-
-DashX.fetchContent = (contentType, options) => {
-	return fetchContent(contentType, options);
-};
-
-DashX.uploadExternalAsset = async (file, externalColumnId) => {
-  // Convert content uri to file uri
-  if (file.uri.startsWith("content://")) {
-    file.uri = `file://${await getRealPathFromURI(file.uri)}`;
-  }
-
-  return uploadExternalAsset(file, externalColumnId);
-};
-
-DashX.prepareExternalAsset = (externalColumnId) => {
-	return prepareExternalAsset(externalColumnId);
-};
-
-DashX.externalAsset = (assetId) => {
-	return externalAsset(assetId);
-};
+DashX.screen = (screenName, data) => screen(screenName, data || null);
 
 DashX.fetchStoredPreferences = () => {
 	return fetchStoredPreferences();
@@ -83,8 +57,8 @@ DashX.saveStoredPreferences = (preferenceData) => {
 	return saveStoredPreferences(preferenceData);
 };
 
-DashX.onMessageReceived = (callback) => {
-	dashXEventEmitter.addListener("messageReceived", callback);
-};
+DashX.subscribe = () => {
+	return subscribe();
+}
 
 export default DashX;
