@@ -5,8 +5,6 @@ typealias CBU = CallbackUtils
 
 @objc(DashXReactNative)
 class DashXReactNative: RCTEventEmitter {
-    private var dashXClient = DashX
-
     override init() {
         super.init()
         DashXEventEmitter.instance.registerEventEmitter(eventEmitter: self)
@@ -22,39 +20,39 @@ class DashXReactNative: RCTEventEmitter {
             baseURI = options["baseURI"] as? String,
             targetEnvironment = options["targetEnvironment"] as? String
 
-        dashXClient.configure(withPublicKey: publicKey,
+        DashX.configure(withPublicKey: publicKey,
                               baseURI: baseURI,
                               targetEnvironment: targetEnvironment)
     }
 
     @objc(identify:)
     func identify(_ options: NSDictionary) {
-        try? dashXClient.identify(withOptions: options)
+        try? DashX.identify(withOptions: options)
     }
 
     @objc(setIdentity:token:)
     func setIdentity(_ uid: String, _ token: String) {
-        dashXClient.setIdentity(uid: uid, token: token)
+        DashX.setIdentity(uid: uid, token: token)
     }
 
     @objc
     func reset() {
-      dashXClient.reset()
+      DashX.reset()
     }
 
     @objc(track:data:)
     func track(_ event: String, _ data: NSDictionary?) {
-        dashXClient.track(event, withData: data)
+        DashX.track(event, withData: data)
     }
 
     @objc(screen:data:)
     func screen(_ screenName: String, _ data: NSDictionary?) {
-      dashXClient.screen(screenName, withData: data)
+      DashX.screen(screenName, withData: data)
     }
 
     @objc(fetchStoredPreferences:rejecter:)
     func fetchStoredPreferences(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
-        dashXClient.fetchStoredPreferences(
+        DashX.fetchStoredPreferences(
             successCallback: CBU.resolveToSuccessCallback(resolve),
             failureCallback: CBU.rejectToFailureCallback(reject)
         )
@@ -62,7 +60,7 @@ class DashXReactNative: RCTEventEmitter {
 
     @objc(saveStoredPreferences:resolve:rejecter:)
     func saveStoredPreferences(_ preferenceData: NSDictionary, _ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
-        dashXClient.saveStoredPreferences(
+        DashX.saveStoredPreferences(
             preferenceData: preferenceData,
             successCallback: CBU.resolveToSuccessCallback(resolve),
             failureCallback: CBU.rejectToFailureCallback(reject)
@@ -71,7 +69,7 @@ class DashXReactNative: RCTEventEmitter {
 
     @objc
     func subscribe() {
-      dashXClient.subscribe()
+      DashX.subscribe()
     }
 }
 
