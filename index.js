@@ -47,7 +47,7 @@ DashX.reset = () => {
 }
 
 DashX.track = (event, data) => {
-  return track(event, data || null)
+  return track(event, data || null);
 }
 
 DashX.screen = (screenName, data) => {

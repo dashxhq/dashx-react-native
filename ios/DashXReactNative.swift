@@ -18,7 +18,7 @@ class DashXReactNative: RCTEventEmitter {
         return ["messageReceived"]
     }
 
-    @objc
+    @objc(configure:)
     func configure(_ options: NSDictionary) {
         let publicKey = options["publicKey"] as! String,
             baseURI = options["baseURI"] as? String,
@@ -31,12 +31,12 @@ class DashXReactNative: RCTEventEmitter {
         )
     }
 
-    @objc
+    @objc(identify:)
     func identify(_ options: NSDictionary) {
         try? DashX.identify(withOptions: options)
     }
 
-    @objc
+    @objc(setIdentity:token:)
     func setIdentity(_ uid: String, _ token: String) {
         DashX.setIdentity(uid: uid, token: token)
     }
@@ -46,17 +46,17 @@ class DashXReactNative: RCTEventEmitter {
         DashX.reset()
     }
 
-    @objc
+    @objc(track:data:)
     func track(_ event: String, _ data: NSDictionary?) {
         DashX.track(event, withData: data)
     }
 
-    @objc
+    @objc(screen:data:)
     func screen(_ screenName: String, _ data: NSDictionary?) {
         DashX.screen(screenName, withData: data)
     }
 
-    @objc
+    @objc(fetchStoredPreferences:rejecter:)
     func fetchStoredPreferences(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
         DashX.fetchStoredPreferences(
             successCallback: CBU.resolveToSuccessCallback(resolve),
@@ -64,7 +64,7 @@ class DashXReactNative: RCTEventEmitter {
         )
     }
 
-    @objc
+    @objc(saveStoredPreferences:resolve:rejecter:)
     func saveStoredPreferences(_ preferenceData: NSDictionary, _ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
         DashX.saveStoredPreferences(
             preferenceData: preferenceData,
