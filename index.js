@@ -9,56 +9,65 @@ const LINKING_ERROR =
 const DashX = NativeModules.DashXReactNative
   ? NativeModules.DashXReactNative
   : new Proxy(
-      {},
-      {
-        get() {
-          throw new Error(LINKING_ERROR);
-        },
-      }
-    );
+    {},
+    {
+      get() {
+        throw new Error(LINKING_ERROR);
+      },
+    }
+  );
 
 const {
-	configure,
-	identify,
-	setIdentity,
-	reset,
-	track,
-	screen,
-	fetchStoredPreferences,
-	saveStoredPreferences,
-	subscribe
+  configure,
+  identify,
+  setIdentity,
+  reset,
+  track,
+  screen,
+  fetchStoredPreferences,
+  saveStoredPreferences,
+  subscribe,
+  unsubscribe
 } = DashX;
 
 DashX.configure = (options) => {
-	return configure(options);
+  return configure(options);
 }
 
 DashX.identify = (options) => {
-	return identify(options);
+  return identify(options);
 };
 
 DashX.setIdentity = (uid, token) => {
-	return setIdentity(uid, token);
+  return setIdentity(uid, token);
 };
 
 DashX.reset = () => {
-	return reset();
+  return reset();
 }
 
-DashX.track = (event, data) => track(event, data || null);
+DashX.track = (event, data) => {
+  return track(event, data || null)
+}
 
-DashX.screen = (screenName, data) => screen(screenName, data || null);
+DashX.screen = (screenName, data) => {
+  return screen(screenName, data || null)
+}
 
 DashX.fetchStoredPreferences = () => {
-	return fetchStoredPreferences();
+  return fetchStoredPreferences();
 };
 
 DashX.saveStoredPreferences = (preferenceData) => {
-	return saveStoredPreferences(preferenceData);
+  return saveStoredPreferences(preferenceData);
 };
 
 DashX.subscribe = () => {
-	return subscribe();
+  return subscribe();
+}
+
+DashX.unsubscribe = () => {
+  return unsubscribe();
 }
 
 export default DashX;
