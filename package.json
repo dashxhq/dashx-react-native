@@ -1,7 +1,7 @@
 {
   "name": "@dashx/react-native",
   "title": "DashX React Native",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "DashX SDK for React Native",
   "main": "index.js",
   "files": [
