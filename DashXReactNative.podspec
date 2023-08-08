@@ -41,4 +41,5 @@ Pod::Spec.new do |s|
   end
 
   s.dependency "DashX", "1.0.18"
+  s.dependency "React-RCTAppDelegate"
 end

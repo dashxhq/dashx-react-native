@@ -23,4 +23,6 @@ RCT_EXTERN_METHOD(subscribe);
 
 RCT_EXTERN_METHOD(unsubscribe);
 
+RCT_EXTERN_METHOD(setLogLevel:(int *)level);
+
 @end

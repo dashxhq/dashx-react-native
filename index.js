@@ -27,7 +27,8 @@ const {
   fetchStoredPreferences,
   saveStoredPreferences,
   subscribe,
-  unsubscribe
+  unsubscribe,
+  setLogLevel,
 } = DashX;
 
 DashX.configure = (options) => {
@@ -68,6 +69,10 @@ DashX.subscribe = () => {
 
 DashX.unsubscribe = () => {
   return unsubscribe();
+}
+
+DashX.setLogLevel = (level) => {
+  return setLogLevel(level);
 }
 
 export default DashX;

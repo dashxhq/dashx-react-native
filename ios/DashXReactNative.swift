@@ -82,6 +82,12 @@ class DashXReactNative: RCTEventEmitter {
     func unsubscribe() {
         DashX.unsubscribe()
     }
+
+    @objc(setLogLevel:)
+    func setLogLevel(_ level: Int) {
+        let logLevel = DashXLog.LogLevel(rawValue: level) ?? DashXLog.LogLevel.off
+        DashXLog.setLogLevel(to: logLevel)
+    }
 }
 
 class CallbackUtils {
