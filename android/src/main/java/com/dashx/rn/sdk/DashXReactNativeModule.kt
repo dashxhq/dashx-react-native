@@ -206,6 +206,11 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
         dashXClient?.subscribe()
     }
 
+    @ReactMethod
+    fun unsubscribe() {
+        dashXClient?.unsubscribe()
+    }
+
     //FIXME Amend the logic to work with React Native content URIs
     fun getFilePathFromURIString(contentUriString: String): String {
         val sanitizedURI = contentUriString.replace("\"", "")
