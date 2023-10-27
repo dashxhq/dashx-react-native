@@ -29,12 +29,12 @@ def getVersionFromNpm() {
 }
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion 33
 
     defaultConfig {
         minSdkVersion 16
-        targetSdkVersion 31
-        compileSdkVersion 31
+        targetSdkVersion 33
+        compileSdkVersion 33
         versionCode 1
         versionName getVersionFromNpm()
 
