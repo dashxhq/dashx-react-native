@@ -3,7 +3,7 @@ import groovy.json.JsonSlurper
 buildscript {
     ext {
         kotlinVersion = '1.8.0'
-        androidToolsVersion = '7.0.4'
+        androidToolsVersion = '7.1.1'
     }
 
     repositories {
@@ -29,7 +29,7 @@ def getVersionFromNpm() {
 }
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion 33
 
     defaultConfig {
         minSdkVersion 21
@@ -43,6 +43,17 @@ android {
     lintOptions {
         abortOnError false
     }
+
+    packagingOptions {
+        pickFirst 'lib/arm64-v8a/libc++_shared.so'
+        pickFirst 'lib/arm64-v8a/libfbjni.so'
+        pickFirst 'lib/armeabi-v7a/libc++_shared.so'
+        pickFirst 'lib/armeabi-v7a/libfbjni.so'
+        pickFirst 'lib/x86/libc++_shared.so'
+        pickFirst 'lib/x86/libfbjni.so'
+        pickFirst 'lib/x86_64/libc++_shared.so'
+        pickFirst 'lib/x86_64/libfbjni.so'
+   }
 }
 
 repositories {
