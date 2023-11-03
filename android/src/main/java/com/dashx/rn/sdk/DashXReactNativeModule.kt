@@ -24,7 +24,8 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
     }
 
     @ReactMethod
-    fun setLogLevel(logLevel: LogLevel) {
+    fun setLogLevel(level: Int) {
+        val logLevel = LogLevel.values().firstOrNull { it.code == level } ?: LogLevel.OFF
         DashXLog.setLogLevel(logLevel)
     }
 
@@ -58,7 +59,7 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
     @ReactMethod
     fun track(event: String, data: ReadableMap?) {
         val jsonData = try {
-            data?.toHashMap() as HashMap<String, String>
+            data?.toHashMap() as HashMap<String, String>?
         } catch (e: Exception) {
             DashXLog.d(tag, e.message)
             return
@@ -203,6 +204,11 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
     @ReactMethod
     fun subscribe() {
         dashXClient?.subscribe()
+    }
+
+    @ReactMethod
+    fun unsubscribe() {
+        dashXClient?.unsubscribe()
     }
 
     //FIXME Amend the logic to work with React Native content URIs

@@ -1,12 +1,10 @@
-import Foundation
-
 class DashXEventEmitter {
     static let instance = DashXEventEmitter()
-    private static var eventEmitter: RCTEventEmitter!
+    private static var eventEmitter: DashXReactNative!
 
     private init() {}
 
-    func registerEventEmitter(eventEmitter: RCTEventEmitter) {
+    func registerEventEmitter(eventEmitter: DashXReactNative) {
         DashXEventEmitter.eventEmitter = eventEmitter
     }
 
