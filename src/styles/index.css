@@ -1,3 +1,152 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss/preflight' layer(base);
+@import 'tailwindcss/utilities' layer(utilities);
+
+.dr {
+  --lightness-50: 97.78%;
+  --lightness-100: 93.56%;
+  --lightness-200: 88.11%;
+  --lightness-300: 82.67%;
+  --lightness-400: 74.22%;
+  --lightness-500: 64.78%;
+  --lightness-600: 54%;
+  --lightness-700: 46.89%;
+  --lightness-800: 39.44%;
+  --lightness-900: 32%;
+  --lightness-950: 23.78%;
+
+  --chroma-50: 0.0108;
+  --chroma-100: 0.0321;
+  --chroma-200: 0.0609;
+  --chroma-300: 0.0908;
+  --chroma-400: 0.1398;
+  --chroma-500: 0.1472;
+  --chroma-600: 0.1299;
+  --chroma-700: 0.1067;
+  --chroma-800: 0.0898;
+  --chroma-900: 0.2;
+  --chroma-950: 0.054;
+
+  [data-chroma-boosted='true'] {
+    --chroma-500: 0.2;
+    --chroma-600: 0.19;
+    --chroma-700: 0.2;
+    --chroma-800: 0.19;
+    --chroma-950: 0.1398;
+  }
+
+  --accent-base: oklch(0% 0 260);
+  --negative-base: oklch(0% 0 20);
+
+  --density: 1;
+  --roundness: 1;
+
+  [data-radius='none'] {
+    --roundness: 0;
+    --radius-full: 0px;
+    --radius-thumb: 0.5px;
+  }
+
+  [data-radius='small'] {
+    --roundness: 0.75;
+    --radius-full: 0px;
+    --radius-thumb: 0.5px;
+  }
+
+  [data-radius='medium'] {
+    --roundness: 1;
+    --radius-full: 0px;
+    --radius-thumb: 9999px;
+  }
+
+  [data-radius='large'] {
+    --roundness: 1.5;
+    --radius-full: 0px;
+    --radius-thumb: 9999px;
+  }
+
+  [data-radius='full'] {
+    --roundness: 1.5;
+    --radius-full: 9999px;
+    --radius-thumb: 9999px;
+  }
+}
+
+@theme {
+  /* Breakpoints */
+  --breakpoint-sm: 40rem;
+  --breakpoint-md: 48rem;
+  --breakpoint-lg: 64rem;
+  --breakpoint-xl: 80rem;
+  --breakpoint-2xl: 96rem;
+
+  /* Colors */
+  /* Default background */
+  --color-accent-50: oklch(from var(--accent-base) var(--lightness-50) var(--chroma-50) h);
+  /* Hover background */
+  --color-accent-100: oklch(from var(--accent-base) var(--lightness-100) var(--chroma-100) h);
+  /* Active background */
+  --color-accent-200: oklch(from var(--accent-base) var(--lightness-200) var(--chroma-200) h);
+  /* Default border */
+  --color-accent-300: oklch(from var(--accent-base) var(--lightness-300) var(--chroma-300) h);
+  /* Hover border */
+  --color-accent-400: oklch(from var(--accent-base) var(--lightness-400) var(--chroma-400) h);
+  /* Active border */
+  --color-accent-500: oklch(from var(--accent-base) var(--lightness-500) var(--chroma-500) h);
+  /* Default High Contrast background */
+  --color-accent-600: oklch(from var(--accent-base) var(--lightness-600) var(--chroma-600) h);
+  /* Hover High Contrast background */
+  --color-accent-700: oklch(from var(--accent-base) var(--lightness-700) var(--chroma-700) h);
+  /* Active background */
+  --color-accent-800: oklch(from var(--accent-base) var(--lightness-800) var(--chroma-800) h);
+  /* Primary Text */
+  --color-accent-900: oklch(from var(--accent-base) var(--lightness-900) var(--chroma-900) h);
+  /* Secondary Text */
+  --color-accent-950: oklch(from var(--accent-base) var(--lightness-950) var(--chroma-950) h);
+
+  --color-negative-50: oklch(from var(--negative-base) var(--lightness-50) var(--chroma-50) h);
+  --color-negative-100: oklch(from var(--negative-base) var(--lightness-100) var(--chroma-100) h);
+  --color-negative-200: oklch(from var(--negative-base) var(--lightness-200) var(--chroma-200) h);
+  --color-negative-300: oklch(from var(--negative-base) var(--lightness-300) var(--chroma-300) h);
+  --color-negative-400: oklch(from var(--negative-base) var(--lightness-400) var(--chroma-400) h);
+  --color-negative-500: oklch(from var(--negative-base) var(--lightness-500) var(--chroma-500) h);
+  --color-negative-600: oklch(from var(--negative-base) var(--lightness-600) var(--chroma-600) h);
+  --color-negative-700: oklch(from var(--negative-base) var(--lightness-700) var(--chroma-700) h);
+  --color-negative-800: oklch(from var(--negative-base) var(--lightness-800) var(--chroma-800) h);
+  --color-negative-900: oklch(from var(--negative-base) var(--lightness-900) var(--chroma-900) h);
+  --color-negative-950: oklch(from var(--negative-base) var(--lightness-950) var(--chroma-950) h);
+
+  --color-gray-50: oklch(from var(--accent-base) var(--lightness-50) calc(0.1 * var(--chroma-50)) h);
+  --color-gray-100: oklch(from var(--accent-base) var(--lightness-100) calc(0.1 * var(--chroma-100)) h);
+  --color-gray-200: oklch(from var(--accent-base) var(--lightness-200) calc(0.1 * var(--chroma-200)) h);
+  --color-gray-300: oklch(from var(--accent-base) var(--lightness-300) calc(0.1 * var(--chroma-300)) h);
+  --color-gray-400: oklch(from var(--accent-base) var(--lightness-400) calc(0.1 * var(--chroma-400)) h);
+  --color-gray-500: oklch(from var(--accent-base) var(--lightness-500) calc(0.1 * var(--chroma-500)) h);
+  --color-gray-600: oklch(from var(--accent-base) var(--lightness-600) calc(0.1 * var(--chroma-600)) h);
+  --color-gray-700: oklch(from var(--accent-base) var(--lightness-700) calc(0.1 * var(--chroma-700)) h);
+  --color-gray-800: oklch(from var(--accent-base) var(--lightness-800) calc(0.1 * var(--chroma-800)) h);
+  --color-gray-900: oklch(from var(--accent-base) var(--lightness-900) calc(0.1 * var(--chroma-900)) h);
+  --color-gray-950: oklch(from var(--accent-base) var(--lightness-950) calc(0.1 * var(--chroma-950)) h);
+
+  --spacing-1: calc(4px / var(--density));
+  --spacing-2: calc(8px / var(--density));
+  --spacing-3: calc(12px / var(--density));
+  --spacing-4: calc(16px / var(--density));
+  --spacing-6: calc(24px / var(--density));
+  --spacing-8: calc(32px / var(--density));
+  --spacing-10: calc(40px / var(--density));
+  --spacing-12: calc(48px / var(--density));
+  --spacing-14: calc(56px / var(--density));
+  --spacing-16: calc(64px / var(--density));
+  --spacing-18: calc(72px / var(--density));
+  --spacing-24: calc(96px / var(--density));
+  --spacing-28: calc(112px / var(--density));
+  --spacing-32: calc(128px / var(--density));
+
+  --radius-sm: calc((3px / var(--density)) * var(--roundness));
+  --radius-md: calc((4px / var(--density)) * var(--roundness));
+  --radius-lg: calc((6px / var(--density)) * var(--roundness));
+  --radius-xl: calc((8px / var(--density)) * var(--roundness));
+  --radius-2xl: calc((12px / var(--density)) * var(--roundness));
+  --radius-3xl: calc((16px / var(--density)) * var(--roundness));
+  --radius-full: 999px;
+}
