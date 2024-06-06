@@ -14,9 +14,9 @@
     "DashX.podspec"
   ],
   "scripts": {
-    "build": "babel src --out-dir lib",
-    "prepare": "npm run build",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build:js": "babel src --out-dir lib",
+    "build:css": "postcss src/styles/index.css -o src/styles/styles.css",
+    "build": "npm run build:css && npm run build:js"
   },
   "repository": {
     "type": "git",
@@ -42,6 +42,8 @@
     "autoprefixer": "^10.4.19",
     "nativewind": "^2.0.11",
     "postcss": "^8.4.38",
+    "postcss-cli": "^11.0.0",
+    "postcss-preset-env": "^9.5.14",
     "react-native-get-real-path": "github:Wraptime/react-native-get-real-path",
     "tailwindcss": "^3.4.3"
   }
