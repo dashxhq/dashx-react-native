@@ -1,15 +1,11 @@
 package com.dashx.rn.sdk
 
-import android.content.pm.PackageInfo
-import android.content.pm.PackageManager.NameNotFoundException
 import android.net.Uri
 import com.dashx.rn.sdk.util.*
-import com.dashx.sdk.DashXClient as DashX
-import com.dashx.sdk.DashXLog
-import com.dashx.sdk.DashXLog.LogLevel
-import com.dashx.sdk.data.LibraryInfo
+import com.dashx.android.DashX
+import com.dashx.android.DashXLog
+import com.dashx.android.DashXLog.LogLevel
 import com.facebook.react.bridge.*
-import java.io.File
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -17,7 +13,6 @@ import kotlinx.serialization.json.JsonObject
 
 class DashXReactNativeModule(private val reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
     private val tag = DashXReactNativeModule::class.java.simpleName
-    private var dashXClient: DashX? = null
 
     override fun getName(): String {
         return "DashXReactNative"
@@ -31,29 +26,28 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
 
     @ReactMethod
     fun configure(options: ReadableMap) {
-        dashXClient = DashX.configure(
+        DashX.configure(
             reactContext,
             options.getString("publicKey")!!,
             options.getStringIfPresent("baseURI"),
-            options.getStringIfPresent("targetEnvironment"),
-            LibraryInfo("dashx-react-native", BuildConfig.VERSION_NAME)
+            options.getStringIfPresent("targetEnvironment")
         )
     }
 
     @ReactMethod
     fun identify(options: ReadableMap?) {
         val optionsHashMap = options?.toHashMap()
-        dashXClient?.identify(optionsHashMap as HashMap<String, String>?)
+        DashX.identify(optionsHashMap as HashMap<String, String>?)
     }
 
     @ReactMethod
     fun setIdentity(uid: String?, token: String?) {
-        dashXClient?.setIdentity(uid, token)
+        DashX.setIdentity(uid, token)
     }
 
     @ReactMethod
     fun reset() {
-        dashXClient?.reset()
+        DashX.reset()
     }
 
     @ReactMethod
@@ -65,25 +59,22 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
             return
         }
 
-        dashXClient?.track(event, jsonData)
+        DashX.track(event, jsonData)
     }
 
     @ReactMethod
     fun screen(screenName: String, data: ReadableMap?) {
-        dashXClient?.screen(screenName, data?.toHashMap() as HashMap<String, String>)
+        DashX.screen(screenName, data?.toHashMap() as HashMap<String, String>)
     }
 
     @ReactMethod
     fun fetchContent(urn: String, options: ReadableMap?, promise: Promise) {
-        dashXClient?.fetchContent(
+        DashX.fetchRecord(
             urn,
             options?.getBooleanIfPresent("preview"),
             options?.getStringIfPresent("language"),
-            listOf(options?.getArray("fields")) as List<String>?,
-            listOf(options?.getArray("include")) as List<String>?,
-            listOf(options?.getArray("exclude")) as List<String>?,
             onError = {
-                promise.reject("EUNSPECIFIED", it)
+                promise.reject("EUNSPECIFIED", it.message)
             },
             onSuccess = {
                 promise.resolve(convertJsonToMap(convertKJsonToJson(it)))
@@ -107,19 +98,11 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
             throw Exception("Encountered an error while parsing order")
         }
 
-        dashXClient?.searchContent(
+        DashX.searchRecords(
             contentType,
-            options?.getString("returnType") ?: "all",
             convertJsonToKJson(jsonFilter),
-            convertJsonToKJson(jsonOrder),
-            options?.getIntIfPresent("limit"),
-            options?.getBooleanIfPresent("preview"),
-            options?.getStringIfPresent("language"),
-            listOf(options?.getArray("fields")) as List<String>?,
-            listOf(options?.getArray("include")) as List<String>?,
-            listOf(options?.getArray("exclude")) as List<String>?,
             onError = {
-                promise.reject("EUNSPECIFIED", it)
+                promise.reject("EUNSPECIFIED", it.message)
             },
             onSuccess = { content ->
                 val readableArray = Arguments.createArray()
@@ -132,53 +115,10 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
     }
 
     @ReactMethod
-    fun addItemToCart(
-        itemId: String,
-        pricingId: String,
-        quantity: String,
-        reset: Boolean? = false,
-        custom: ReadableMap? = null,
-        promise: Promise
-    ) {
-        val jsonCustom = try {
-            convertMapToJson(custom)
-        } catch (e: Exception) {
-            DashXLog.d(tag, e.message)
-            throw Exception("Encountered an error while parsing custom")
-        }
-
-        dashXClient?.addItemToCart(
-            itemId,
-            pricingId,
-            quantity,
-            reset ?: false,
-            convertJsonToKJson(jsonCustom),
-            onError = {
-                promise.reject("EUNSPECIFIED", it)
-            },
-            onSuccess = { content ->
-                promise.resolve(convertJsonToMap(convertKJsonToJson(Json.decodeFromString<JsonObject>(Json.encodeToString(content)))))
-            }
-        )
-    }
-
-    @ReactMethod
-    fun fetchCart(promise: Promise) {
-        dashXClient?.fetchCart(
-            onError = {
-                promise.reject("EUNSPECIFIED", it)
-            },
-            onSuccess = { content ->
-                promise.resolve(convertJsonToMap(convertKJsonToJson(Json.decodeFromString<JsonObject>(Json.encodeToString(content)))))
-            }
-        )
-    }
-
-    @ReactMethod
     fun fetchStoredPreferences(promise: Promise) {
-        dashXClient?.fetchStoredPreferences(
+        DashX.fetchStoredPreferences(
             onError = {
-                promise.reject("EUNSPECIFIED", it)
+                promise.reject("EUNSPECIFIED", it.message)
             },
             onSuccess = { content ->
                 promise.resolve(convertJsonToMap(convertKJsonToJson(Json.decodeFromString<JsonObject>(Json.encodeToString(content)))))
@@ -190,10 +130,10 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
     fun saveStoredPreferences(preferenceData: ReadableMap?, promise: Promise) {
         val preferencesString = MapUtil.toJSONElement(preferenceData).toString()
 
-        dashXClient?.saveStoredPreferences(
+        DashX.saveStoredPreferences(
             Json.decodeFromString<JsonObject>(preferencesString),
             onError = {
-                promise.reject("EUNSPECIFIED", it)
+                promise.reject("EUNSPECIFIED", it.message)
             },
             onSuccess = { content ->
                 promise.resolve(convertJsonToMap(convertKJsonToJson(Json.decodeFromString<JsonObject>(Json.encodeToString(content)))))
@@ -203,27 +143,11 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
 
     @ReactMethod
     fun subscribe() {
-        dashXClient?.subscribe()
+        DashX.subscribe()
     }
 
     @ReactMethod
     fun unsubscribe() {
-        dashXClient?.unsubscribe()
-    }
-
-    //FIXME Amend the logic to work with React Native content URIs
-    fun getFilePathFromURIString(contentUriString: String): String {
-        val sanitizedURI = contentUriString.replace("\"", "")
-        val path = Uri.parse(sanitizedURI).path
-        val index = path?.indexOf(':')
-
-        if (index == null) {
-            return ""
-        }
-
-        // Remove unnecessary URI component
-        val filePath = path!!.substring(index!! + 1)
-
-        return filePath
+        DashX.unsubscribe()
     }
 }
