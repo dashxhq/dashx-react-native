@@ -4,6 +4,7 @@
   "version": "1.1.0",
   "description": "DashX SDK for React Native",
   "main": "index.js",
+  "types": "index.d.ts",
   "files": [
     "!**/__fixtures__",
     "!**/__mocks__",
@@ -15,16 +16,13 @@
     "!android/gradlew",
     "!android/local.properties",
     "!ios/build",
-    "!lib/typescript/example",
     "*.podspec",
     "android",
-    "ContentOptionsBuilder.js",
-    "cpp",
     "DashXReactNative.podspec",
     "index.js",
+    "index.d.ts",
     "ios",
-    "README.md",
-    "utils.js"
+    "README.md"
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -64,15 +62,12 @@
     "prettier": "^2.0.5",
     "react": "18.3.1",
     "react-native": "0.77.3",
-    "react-native-builder-bob": "^0.21.3",
     "turbo": "^1.10.7"
   },
   "engines": {
     "node": ">= 16.0.0"
   },
-  "dependencies": {
-    "react-native-get-real-path": "github:Wraptime/react-native-get-real-path"
-  },
+  "dependencies": {},
   "eslintConfig": {
     "root": true,
     "extends": [

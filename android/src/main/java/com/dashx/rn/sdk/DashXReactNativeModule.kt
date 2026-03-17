@@ -1,6 +1,5 @@
 package com.dashx.rn.sdk
 
-import android.net.Uri
 import com.dashx.rn.sdk.util.*
 import com.dashx.android.DashX
 import com.dashx.android.DashXLog
@@ -37,7 +36,9 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
     @ReactMethod
     fun identify(options: ReadableMap?) {
         val optionsHashMap = options?.toHashMap()
-        DashX.identify(optionsHashMap as HashMap<String, String>?)
+            ?.filterValues { it != null }
+            ?.mapValues { it.value.toString() }
+        DashX.identify(optionsHashMap?.let { HashMap(it) })
     }
 
     @ReactMethod
@@ -53,7 +54,10 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
     @ReactMethod
     fun track(event: String, data: ReadableMap?) {
         val jsonData = try {
-            data?.toHashMap() as HashMap<String, String>?
+            data?.toHashMap()
+                ?.filterValues { it != null }
+                ?.mapValues { it.value.toString() }
+                ?.let { HashMap(it) }
         } catch (e: Exception) {
             DashXLog.d(tag, e.message)
             return
@@ -64,7 +68,12 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
 
     @ReactMethod
     fun screen(screenName: String, data: ReadableMap?) {
-        DashX.screen(screenName, data?.toHashMap() as HashMap<String, String>)
+        val screenData = data?.toHashMap()
+            ?.filterValues { it != null }
+            ?.mapValues { it.value.toString() }
+            ?.let { HashMap(it) }
+            ?: HashMap()
+        DashX.screen(screenName, screenData)
     }
 
     @ReactMethod

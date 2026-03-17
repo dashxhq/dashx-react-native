@@ -232,6 +232,22 @@ Unsubscribe:
 DashX.unsubscribe();
 ```
 
+### Listen for incoming messages
+
+Register a listener to handle push notifications when they arrive:
+
+```js
+import { useEffect } from 'react';
+
+useEffect(() => {
+  const subscription = DashX.onMessageReceived((message) => {
+    console.log('Notification received:', message);
+  });
+
+  return () => subscription.remove();
+}, []);
+```
+
 ### Notification preferences
 
 Fetch the user's stored notification preferences:
@@ -323,6 +339,7 @@ const styles = StyleSheet.create({
 | `fetchStoredPreferences` | `()` | `Promise<object>` | Fetch stored notification preferences |
 | `saveStoredPreferences` | `(data: object)` | `Promise<object>` | Save notification preferences |
 | `setLogLevel` | `(level: number)` | `void` | Set SDK log verbosity |
+| `onMessageReceived` | `(callback: function)` | `EmitterSubscription` | Listen for incoming push notifications |
 
 For detailed usage and advanced features, refer to the [DashX documentation](https://docs.dashx.com/developer).
 
