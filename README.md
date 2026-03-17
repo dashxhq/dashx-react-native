@@ -161,15 +161,24 @@ import DashX from '@dashx/react-native';
 
 ### Configure
 
-Initialize the SDK as early as possible (e.g. in your root component or `App.js`):
+Initialize the SDK once at app startup. Call `configure` at the top level of your entry file (e.g. `App.js`) so it runs before any component mounts:
 
 ```js
+// App.js — call at module level, before the component
+import DashX from '@dashx/react-native';
+
 DashX.configure({
   publicKey: 'your-public-key',
   // baseURI: 'https://api.dashx.com',       // optional, custom API endpoint
   // targetEnvironment: 'production',         // optional
 });
+
+export default function App() {
+  // ...
+}
 ```
+
+Calling from `useEffect` in your root component also works, but module-level init is preferred so the SDK is ready as early as possible.
 
 | Option | Type | Required | Description |
 |--------|------|----------|-------------|
@@ -280,16 +289,15 @@ Below is a full example of integrating DashX in a React Native Android app:
 
 ```js
 // App.js
-import React, { useEffect } from 'react';
+import React from 'react';
 import { View, Text, Button, StyleSheet } from 'react-native';
 import DashX from '@dashx/react-native';
 
-export default function App() {
-  useEffect(() => {
-    DashX.configure({ publicKey: 'your-public-key' });
-    DashX.subscribe();
-  }, []);
+// Initialize once at app load
+DashX.configure({ publicKey: 'your-public-key' });
+DashX.subscribe();
 
+export default function App() {
   const handleLogin = () => {
     DashX.setIdentity('user-123', 'auth-token');
     DashX.identify({
