@@ -20,9 +20,11 @@ class DashXReactNative: RCTEventEmitter {
 
     @objc(configure:)
     func configure(_ options: NSDictionary) {
-        let publicKey = options["publicKey"] as! String,
-            baseURI = options["baseURI"] as? String,
-            targetEnvironment = options["targetEnvironment"] as? String
+        guard let publicKey = options["publicKey"] as? String, !publicKey.isEmpty else {
+            return
+        }
+        let baseURI = options["baseURI"] as? String
+        let targetEnvironment = options["targetEnvironment"] as? String
 
         DashX.configure(
             withPublicKey: publicKey,
@@ -54,6 +56,16 @@ class DashXReactNative: RCTEventEmitter {
     @objc(screen:data:)
     func screen(_ screenName: String, _ data: NSDictionary?) {
         DashX.screen(screenName, withData: data)
+    }
+
+    @objc(fetchRecord:options:resolver:rejecter:)
+    func fetchRecord(_ urn: String, options: NSDictionary?, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+        reject("EUNIMPLEMENTED", "fetchRecord is not yet implemented on iOS", nil)
+    }
+
+    @objc(searchRecords:options:resolver:rejecter:)
+    func searchRecords(_ resource: String, options: NSDictionary?, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+        reject("EUNIMPLEMENTED", "searchRecords is not yet implemented on iOS", nil)
     }
 
     @objc(fetchStoredPreferences:rejecter:)

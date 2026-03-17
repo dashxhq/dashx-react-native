@@ -227,6 +227,51 @@ DashX.screen('HomeScreen', {
 });
 ```
 
+### Fetch a record
+
+Fetch a single record by URN (e.g. `"article/123"`) with optional options (matches [dashx-android](https://github.com/dashxhq/dashx-android) `fetchRecord`). **Android only**; on iOS the promise rejects until the native SDK supports it.
+
+```js
+const record = await DashX.fetchRecord('article/123', {
+  preview: false,
+  language: 'en',
+  // fields, include, exclude as arrays of objects if needed
+});
+```
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `preview` | `boolean` | Include draft/preview content |
+| `language` | `string` | Content language |
+| `fields` | `object[]` | Fields to return |
+| `include` | `object[]` | Related data to include |
+| `exclude` | `object[]` | Fields to exclude |
+
+### Search records
+
+Search records by resource with optional filter, order, limit, and other options (matches [dashx-android](https://github.com/dashxhq/dashx-android) `searchRecords`). **Android only**; on iOS the promise rejects until the native SDK supports it.
+
+```js
+const records = await DashX.searchRecords('article', {
+  filter: { status: 'published' },
+  order: [{ field: 'createdAt', direction: 'desc' }],
+  limit: 10,
+  preview: false,
+  language: 'en',
+});
+```
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `filter` | `object` | Filter criteria |
+| `order` | `object[]` | Sort order (e.g. `[{ field, direction }]`) |
+| `limit` | `number` | Max records to return |
+| `preview` | `boolean` | Preview/draft content |
+| `language` | `string` | Content language |
+| `fields` | `object[]` | Fields to return |
+| `include` | `object[]` | Related data to include |
+| `exclude` | `object[]` | Fields to exclude |
+
 ### Push notifications
 
 Subscribe the current device to push notifications:
@@ -342,6 +387,8 @@ const styles = StyleSheet.create({
 | `reset` | `()` | `void` | Clear the current user identity |
 | `track` | `(event: string, data?: object)` | `void` | Track a named event with optional data |
 | `screen` | `(screenName: string, data?: object)` | `void` | Track a screen view with optional data |
+| `fetchRecord` | `(urn: string, options?: object)` | `Promise<object>` | Fetch a single record by URN (e.g. `"article/123"`). Options: preview, language, fields, include, exclude. Android only; iOS rejects until implemented. |
+| `searchRecords` | `(resource: string, options?: object)` | `Promise<object[]>` | Search records (filter, order, limit, preview, language, fields, include, exclude). Android only; iOS rejects until implemented. |
 | `subscribe` | `()` | `void` | Subscribe device for push notifications |
 | `unsubscribe` | `()` | `void` | Unsubscribe device from push notifications |
 | `fetchStoredPreferences` | `()` | `Promise<object>` | Fetch stored notification preferences |

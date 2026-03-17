@@ -16,6 +16,25 @@ export interface IdentifyOptions {
 
 export type LogLevel = 0 | 1 | 2;
 
+export interface FetchRecordOptions {
+  preview?: boolean;
+  language?: string;
+  fields?: Record<string, unknown>[];
+  include?: Record<string, unknown>[];
+  exclude?: Record<string, unknown>[];
+}
+
+export interface SearchRecordsOptions {
+  filter?: Record<string, unknown>;
+  order?: Record<string, unknown>[];
+  limit?: number;
+  preview?: boolean;
+  language?: string;
+  fields?: Record<string, unknown>[];
+  include?: Record<string, unknown>[];
+  exclude?: Record<string, unknown>[];
+}
+
 export interface NotificationMessage {
   [key: string]: unknown;
 }
@@ -51,6 +70,24 @@ export interface DashXInstance {
    * Track a screen view with optional metadata.
    */
   screen(screenName: string, data?: Record<string, unknown>): void;
+
+  /**
+   * Fetch a single record by URN (e.g. "article/123") with optional preview, language, fields, include, exclude.
+   * Returns a promise resolving to the record object.
+   */
+  fetchRecord(
+    urn: string,
+    options?: FetchRecordOptions
+  ): Promise<Record<string, unknown>>;
+
+  /**
+   * Search records by resource with optional filter, order, limit, preview, language, fields, include, exclude.
+   * Returns a promise resolving to an array of record objects.
+   */
+  searchRecords(
+    resource: string,
+    options?: SearchRecordsOptions
+  ): Promise<Record<string, unknown>[]>;
 
   /**
    * Subscribe the current device to push notifications.

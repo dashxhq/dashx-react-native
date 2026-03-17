@@ -1,6 +1,6 @@
 class DashXEventEmitter {
     static let instance = DashXEventEmitter()
-    private static var eventEmitter: DashXReactNative!
+    private static var eventEmitter: DashXReactNative?
 
     private init() {}
 
@@ -9,6 +9,7 @@ class DashXEventEmitter {
     }
 
     func dispatch(name: String, body: Any?) {
-        DashXEventEmitter.eventEmitter.sendEvent(withName: name, body: body)
+        guard let emitter = DashXEventEmitter.eventEmitter else { return }
+        emitter.sendEvent(withName: name, body: body)
     }
 }

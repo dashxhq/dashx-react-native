@@ -26,6 +26,20 @@ fun convertJsonToKJson(jsonObject: JsonObject?): KJsonObject? {
     return Json.decodeFromString(jsonString)
 }
 
+/**
+ * Converts a ReadableArray of maps to a list of kotlinx JsonObjects for DashX.searchRecords options (order, fields, include, exclude).
+ */
+@Throws(JSONException::class)
+fun convertReadableArrayToKJsonList(readableArray: ReadableArray?): List<KJsonObject>? {
+    if (readableArray == null || readableArray.size() == 0) return null
+    return (0 until readableArray.size()).mapNotNull { i ->
+        when (readableArray.getType(i)) {
+            ReadableType.Map -> readableArray.getMap(i)?.let { convertMapToJson(it)?.let { gson -> convertJsonToKJson(gson) } }
+            else -> null
+        }
+    }.ifEmpty { null }
+}
+
 @Throws(JSONException::class)
 fun convertMapToJson(readableMap: ReadableMap?): JsonObject? {
     val iterator = readableMap?.keySetIterator() ?: return null

@@ -80,6 +80,26 @@ const DashX = {
     return getNativeDashX().screen(screenName, data || null);
   },
 
+  fetchRecord(urn, options = {}) {
+    if (!urn || typeof urn !== 'string') {
+      throw new Error('DashX.fetchRecord: urn is required and must be a string (e.g. "article/123")');
+    }
+    if (options !== null && typeof options !== 'object') {
+      throw new Error('DashX.fetchRecord: options must be an object');
+    }
+    return getNativeDashX().fetchRecord(urn, options || null);
+  },
+
+  searchRecords(resource, options = {}) {
+    if (!resource || typeof resource !== 'string') {
+      throw new Error('DashX.searchRecords: resource is required and must be a string');
+    }
+    if (options !== null && typeof options !== 'object') {
+      throw new Error('DashX.searchRecords: options must be an object');
+    }
+    return getNativeDashX().searchRecords(resource, options || null);
+  },
+
   fetchStoredPreferences() {
     return getNativeDashX().fetchStoredPreferences();
   },

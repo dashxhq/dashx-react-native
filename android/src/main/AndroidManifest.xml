@@ -1,4 +1,16 @@
-
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <application>
+        <!-- Replace dashx-android's FCM service with our subclass that also emits to JS. -->
+        <service
+            android:name="com.dashx.android.DashXFirebaseMessagingService"
+            tools:node="remove" />
+        <service
+            android:name="com.dashx.rn.sdk.DashXReactNativeFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+    </application>
 </manifest>

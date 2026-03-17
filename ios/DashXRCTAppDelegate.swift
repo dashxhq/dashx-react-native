@@ -70,6 +70,8 @@ open class DashXRCTAppDelegate: RCTAppDelegate, MessagingDelegate, UNUserNotific
 
         DashX.trackNotification(message: message, event: .delivered)
 
+        DashXEventEmitter.instance.dispatch(name: "messageReceived", body: bridgeSafePayload(from: message))
+
         let presentationOptions = notificationDeliveredInForeground(message: message)
 
         completionHandler(presentationOptions)
@@ -80,6 +82,8 @@ open class DashXRCTAppDelegate: RCTAppDelegate, MessagingDelegate, UNUserNotific
 
         // Pass notification reciept information to Firebase
         Messaging.messaging().appDidReceiveMessage(message)
+
+        DashXEventEmitter.instance.dispatch(name: "messageReceived", body: bridgeSafePayload(from: message))
 
         if response.actionIdentifier == UNNotificationDismissActionIdentifier {
             DashX.trackNotification(message: message, event: .dismissed)
@@ -99,6 +103,8 @@ open class DashXRCTAppDelegate: RCTAppDelegate, MessagingDelegate, UNUserNotific
     public override func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable: Any], fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
         // Pass notification reciept information to Firebase
         Messaging.messaging().appDidReceiveMessage(userInfo)
+
+        DashXEventEmitter.instance.dispatch(name: "messageReceived", body: bridgeSafePayload(from: userInfo))
 
         guard let dashxData = userInfo.dashxNotificationData() else {
             DashXLog.d(tag: #function, "Unable to parse DashX notification data")
@@ -154,6 +160,38 @@ open class DashXRCTAppDelegate: RCTAppDelegate, MessagingDelegate, UNUserNotific
     open func notificationClicked(message: [AnyHashable: Any], actionIdentifier: String) {}
 
     open func handleLink(url: URL) {}
+
+    /// Converts notification userInfo to a dictionary safe for the React Native bridge (string keys, JSON-serializable values).
+    private func bridgeSafePayload(from userInfo: [AnyHashable: Any]) -> [String: Any] {
+        userInfo.reduce(into: [String: Any]()) { result, pair in
+            let key = String(describing: pair.key)
+            let value = pair.value
+            if let str = value as? String {
+                result[key] = str
+            } else if let num = value as? NSNumber {
+                result[key] = num
+            } else if let dict = value as? [AnyHashable: Any] {
+                result[key] = bridgeSafePayload(from: dict)
+            } else if let arr = value as? [Any] {
+                result[key] = arr.map { item -> Any in
+                    if let str = item as? String { return str }
+                    if let num = item as? NSNumber { return num }
+                    if let d = item as? [AnyHashable: Any] { return bridgeSafePayload(from: d) }
+                    if let a = item as? [Any] {
+                        return a.map { sub in
+                            if let s = sub as? String { return s }
+                            if let n = sub as? NSNumber { return n }
+                            if let sd = sub as? [AnyHashable: Any] { return bridgeSafePayload(from: sd) }
+                            return "\(sub)"
+                        }
+                    }
+                    return "\(item)"
+                }
+            } else {
+                result[key] = "\(value)"
+            }
+        }
+    }
 }
 
 extension DashXRCTAppDelegate {

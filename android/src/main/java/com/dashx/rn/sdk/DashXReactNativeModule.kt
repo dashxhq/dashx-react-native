@@ -13,6 +13,16 @@ import kotlinx.serialization.json.JsonObject
 class DashXReactNativeModule(private val reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
     private val tag = DashXReactNativeModule::class.java.simpleName
 
+    override fun initialize() {
+        super.initialize()
+        MessageReceivedEventHolder.reactContext = reactContext
+    }
+
+    override fun invalidate() {
+        MessageReceivedEventHolder.reactContext = null
+        super.invalidate()
+    }
+
     override fun getName(): String {
         return "DashXReactNative"
     }
@@ -77,11 +87,38 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
     }
 
     @ReactMethod
-    fun fetchContent(urn: String, options: ReadableMap?, promise: Promise) {
+    fun fetchRecord(urn: String, options: ReadableMap?, promise: Promise) {
+        val preview = options?.getBooleanIfPresent("preview")
+        val language = options?.getStringIfPresent("language")
+        val fields = try {
+            convertReadableArrayToKJsonList(options?.getArray("fields"))
+        } catch (e: Exception) {
+            DashXLog.d(tag, e.message)
+            promise.reject("EUNSPECIFIED", "Error parsing fields: ${e.message}")
+            return
+        }
+        val include = try {
+            convertReadableArrayToKJsonList(options?.getArray("include"))
+        } catch (e: Exception) {
+            DashXLog.d(tag, e.message)
+            promise.reject("EUNSPECIFIED", "Error parsing include: ${e.message}")
+            return
+        }
+        val exclude = try {
+            convertReadableArrayToKJsonList(options?.getArray("exclude"))
+        } catch (e: Exception) {
+            DashXLog.d(tag, e.message)
+            promise.reject("EUNSPECIFIED", "Error parsing exclude: ${e.message}")
+            return
+        }
+
         DashX.fetchRecord(
-            urn,
-            options?.getBooleanIfPresent("preview"),
-            options?.getStringIfPresent("language"),
+            urn = urn,
+            preview = preview,
+            language = language,
+            fields = fields,
+            include = include,
+            exclude = exclude,
             onError = {
                 promise.reject("EUNSPECIFIED", it.message)
             },
@@ -92,30 +129,62 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
     }
 
     @ReactMethod
-    fun searchContent(contentType: String, options: ReadableMap?, promise: Promise) {
+    fun searchRecords(resource: String, options: ReadableMap?, promise: Promise) {
         val jsonFilter = try {
-            convertMapToJson(options?.getMap("filter"))
+            convertMapToJson(options?.getMap("filter"))?.let { convertJsonToKJson(it) }
         } catch (e: Exception) {
             DashXLog.d(tag, e.message)
-            throw Exception("Encountered an error while parsing filter")
+            promise.reject("EUNSPECIFIED", "Error parsing filter: ${e.message}")
+            return
         }
-
-        val jsonOrder = try {
-            convertMapToJson(options?.getMap("order"))
+        val order = try {
+            convertReadableArrayToKJsonList(options?.getArray("order"))
         } catch (e: Exception) {
             DashXLog.d(tag, e.message)
-            throw Exception("Encountered an error while parsing order")
+            promise.reject("EUNSPECIFIED", "Error parsing order: ${e.message}")
+            return
+        }
+        val limit = options?.getIntIfPresent("limit")
+        val preview = options?.getBooleanIfPresent("preview")
+        val language = options?.getStringIfPresent("language")
+        val fields = try {
+            convertReadableArrayToKJsonList(options?.getArray("fields"))
+        } catch (e: Exception) {
+            DashXLog.d(tag, e.message)
+            promise.reject("EUNSPECIFIED", "Error parsing fields: ${e.message}")
+            return
+        }
+        val include = try {
+            convertReadableArrayToKJsonList(options?.getArray("include"))
+        } catch (e: Exception) {
+            DashXLog.d(tag, e.message)
+            promise.reject("EUNSPECIFIED", "Error parsing include: ${e.message}")
+            return
+        }
+        val exclude = try {
+            convertReadableArrayToKJsonList(options?.getArray("exclude"))
+        } catch (e: Exception) {
+            DashXLog.d(tag, e.message)
+            promise.reject("EUNSPECIFIED", "Error parsing exclude: ${e.message}")
+            return
         }
 
         DashX.searchRecords(
-            contentType,
-            convertJsonToKJson(jsonFilter),
+            resource = resource,
+            filter = jsonFilter,
+            order = order,
+            limit = limit,
+            preview = preview,
+            language = language,
+            fields = fields,
+            include = include,
+            exclude = exclude,
             onError = {
                 promise.reject("EUNSPECIFIED", it.message)
             },
-            onSuccess = { content ->
+            onSuccess = { records ->
                 val readableArray = Arguments.createArray()
-                content.forEach {
+                records.forEach {
                     readableArray.pushMap(convertJsonToMap(convertKJsonToJson(it)))
                 }
                 promise.resolve(readableArray)

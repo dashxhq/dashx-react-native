@@ -13,6 +13,10 @@ RCT_EXTERN_METHOD(track:(NSString *)event data:(NSDictionary * _Nullable)data);
 
 RCT_EXTERN_METHOD(screen:(NSString *)screenName data:(NSDictionary * _Nullable)data);
 
+RCT_EXTERN_METHOD(fetchRecord:(NSString *)urn options:(NSDictionary * _Nullable)options resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject);
+
+RCT_EXTERN_METHOD(searchRecords:(NSString *)resource options:(NSDictionary * _Nullable)options resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject);
+
 RCT_EXTERN_METHOD(fetchStoredPreferences:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject);
 
 RCT_EXTERN_METHOD(saveStoredPreferences:(NSDictionary *)preferenceData resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject);
