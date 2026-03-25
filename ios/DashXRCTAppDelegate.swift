@@ -1,94 +1,113 @@
-import FirebaseCore
-import FirebaseMessaging
 import Foundation
 import UIKit
 import DashX
+#if canImport(FirebaseCore)
+import FirebaseCore
+#endif
+#if canImport(FirebaseMessaging)
+import FirebaseMessaging
+#endif
 
 @objc(DashXRCTAppDelegate)
-open class DashXRCTAppDelegate: RCTAppDelegate, MessagingDelegate, UNUserNotificationCenterDelegate {
-    // MARK: Getters
-    private var app: UIApplication = .shared
+open class DashXRCTAppDelegate: RCTDefaultReactNativeFactoryDelegate, UIApplicationDelegate, UNUserNotificationCenterDelegate {
 
-    // MARK: Init
+    public var window: UIWindow?
+    private var reactNativeFactory: RCTReactNativeFactory?
 
-    public override init() {
-        super.init()
+    /// The React Native module name. Defaults to "main". Override to match your app's registered component name.
+    open var moduleName: String { "main" }
+
+    // MARK: - UIApplicationDelegate
+
+    open func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        #if canImport(FirebaseCore)
+        FirebaseApp.configure()
+        #endif
+        #if canImport(FirebaseMessaging)
+        Messaging.messaging().delegate = self
+        #endif
 
         UNUserNotificationCenter.current().delegate = self
 
-        // Register to ensure device token can be fetched
-        app.registerForRemoteNotifications()
-    }
-
-    // MARK: MessagingDelegate
-
-    open override func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        FirebaseApp.configure()
-        Messaging.messaging().delegate = self
-
-        // Requesting Push Notifications Permission
         DashX.requestNotificationPermission { authorizationStatus in
             switch authorizationStatus {
             case .authorized:
+                print("[DashX] Permission authorized — calling registerForRemoteNotifications")
                 DashXLog.d(tag: #function, "permission authorized to receive push notifications")
+                DispatchQueue.main.async {
+                    application.registerForRemoteNotifications()
+                }
             default:
+                print("[DashX] Permission denied")
                 DashXLog.d(tag: #function, "permission denied to receive push notifications")
             }
         }
 
-        return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+        let factory = RCTReactNativeFactory(delegate: self)
+        reactNativeFactory = factory
+
+        window = UIWindow(frame: UIScreen.main.bounds)
+        factory.startReactNative(withModuleName: moduleName, in: window, launchOptions: launchOptions)
+
+        return true
     }
 
     // MARK: - APNS Token Management
 
-    public override func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+    open func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        print("[DashX] Failed to register for remote notifications: \(error.localizedDescription)")
         DashXLog.d(tag: #function, "Unable to register for remote notifications: \(error.localizedDescription)")
     }
 
-    public override func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+    open func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        print("[DashX] Received APNS token — forwarding to Firebase")
+        #if canImport(FirebaseMessaging)
         Messaging.messaging().setAPNSToken(deviceToken, type: .unknown)
+        Messaging.messaging().token { token, error in
+            print("[DashX] FCM token callback — token: \(token ?? "nil"), error: \(error?.localizedDescription ?? "none")")
+            if let token = token {
+                DashX.setFCMToken(to: token)
+            }
+        }
+        #endif
     }
 
-    public func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
-        guard let token = fcmToken else {
-            DashXLog.d(tag: #function, "FCM Token is empty")
-            return
-        }
+    // MARK: - Universal Links
 
-        DashXLog.d(tag: #function, "FCM Token: \(token)")
-
-        DashX.setFCMToken(to: token)
+    open func application(_ application: UIApplication, continue userActivity: NSUserActivity, restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void) -> Bool {
+        DashX.handleUserActivity(userActivity: userActivity)
+        return true
     }
 
     // MARK: - Push Notifications
 
-    public func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+    open func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
         let message = notification.request.content.userInfo
 
-        // Pass notification reciept information to Firebase
+        #if canImport(FirebaseMessaging)
         Messaging.messaging().appDidReceiveMessage(message)
+        #endif
 
-        DashX.trackNotification(message: message, event: .delivered)
+        DashX.trackMessage(message: message, event: .delivered)
 
         DashXEventEmitter.instance.dispatch(name: "messageReceived", body: bridgeSafePayload(from: message))
 
-        let presentationOptions = notificationDeliveredInForeground(message: message)
-
-        completionHandler(presentationOptions)
+        completionHandler(notificationDeliveredInForeground(message: message))
     }
 
-    public func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
+    open func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
         let message = response.notification.request.content.userInfo
 
-        // Pass notification reciept information to Firebase
+        #if canImport(FirebaseMessaging)
         Messaging.messaging().appDidReceiveMessage(message)
+        #endif
 
         DashXEventEmitter.instance.dispatch(name: "messageReceived", body: bridgeSafePayload(from: message))
 
         if response.actionIdentifier == UNNotificationDismissActionIdentifier {
-            DashX.trackNotification(message: message, event: .dismissed)
+            DashX.trackMessage(message: message, event: .dismissed)
         } else {
-            DashX.trackNotification(message: message, event: .clicked)
+            DashX.trackMessage(message: message, event: .clicked)
 
             if let url = message.dashxNotificationUrl() {
                 handleLink(url: url)
@@ -100,9 +119,10 @@ open class DashXRCTAppDelegate: RCTAppDelegate, MessagingDelegate, UNUserNotific
         completionHandler()
     }
 
-    public override func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable: Any], fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
-        // Pass notification reciept information to Firebase
+    open func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable: Any], fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
+        #if canImport(FirebaseMessaging)
         Messaging.messaging().appDidReceiveMessage(userInfo)
+        #endif
 
         DashXEventEmitter.instance.dispatch(name: "messageReceived", body: bridgeSafePayload(from: userInfo))
 
@@ -153,15 +173,16 @@ open class DashXRCTAppDelegate: RCTAppDelegate, MessagingDelegate, UNUserNotific
         completionHandler(.newData)
     }
 
-    // MARK: - Push Notifications handlers
+    // MARK: - Override points
 
-    open func notificationDeliveredInForeground(message: [AnyHashable: Any]) -> UNNotificationPresentationOptions { return [] }
+    open func notificationDeliveredInForeground(message: [AnyHashable: Any]) -> UNNotificationPresentationOptions { return [.banner, .sound] }
 
     open func notificationClicked(message: [AnyHashable: Any], actionIdentifier: String) {}
 
     open func handleLink(url: URL) {}
 
-    /// Converts notification userInfo to a dictionary safe for the React Native bridge (string keys, JSON-serializable values).
+    // MARK: - Helpers
+
     private func bridgeSafePayload(from userInfo: [AnyHashable: Any]) -> [String: Any] {
         userInfo.reduce(into: [String: Any]()) { result, pair in
             let key = String(describing: pair.key)
@@ -178,7 +199,7 @@ open class DashXRCTAppDelegate: RCTAppDelegate, MessagingDelegate, UNUserNotific
                     if let num = item as? NSNumber { return num }
                     if let d = item as? [AnyHashable: Any] { return bridgeSafePayload(from: d) }
                     if let a = item as? [Any] {
-                        return a.map { sub in
+                        return a.map { sub -> Any in
                             if let s = sub as? String { return s }
                             if let n = sub as? NSNumber { return n }
                             if let sd = sub as? [AnyHashable: Any] { return bridgeSafePayload(from: sd) }
@@ -216,16 +237,13 @@ extension DashXRCTAppDelegate {
                 return
             }
 
-            // Create a temporary file URL to save the downloaded image
             let tmpDirectoryURL = FileManager.default.temporaryDirectory
             let uuid = UUID().uuidString
             let tmpFileURL = tmpDirectoryURL.appendingPathComponent(uuid + ".png")
 
             do {
-                // Move the downloaded file to the temporary file URL
                 try FileManager.default.moveItem(at: location, to: tmpFileURL)
 
-                // Create the notification attachment from the temporary file URL
                 let attachment = try UNNotificationAttachment(identifier: "\(id)-attachment", url: tmpFileURL, options: nil)
                 content.attachments = [attachment]
                 self.createNotification(id: id, content: content)
@@ -236,3 +254,19 @@ extension DashXRCTAppDelegate {
         task.resume()
     }
 }
+
+#if canImport(FirebaseMessaging)
+extension DashXRCTAppDelegate: MessagingDelegate {
+    public func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
+        print("[DashX] messaging delegate fired, token: \(fcmToken ?? "nil")")
+        guard let token = fcmToken else {
+            DashXLog.d(tag: #function, "FCM Token is empty")
+            return
+        }
+
+        DashXLog.d(tag: #function, "FCM Token: \(token)")
+
+        DashX.setFCMToken(to: token)
+    }
+}
+#endif
