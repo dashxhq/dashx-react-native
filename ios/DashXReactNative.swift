@@ -1,13 +1,14 @@
 import Foundation
 import DashX
 
-typealias CBU = CallbackUtils
-
 @objc(DashXReactNative)
 class DashXReactNative: RCTEventEmitter {
     override init() {
         super.init()
         DashXEventEmitter.instance.registerEventEmitter(eventEmitter: self)
+        DashX.linkHandler = { url in
+            DashXEventEmitter.instance.dispatch(name: "linkReceived", body: url.absoluteString)
+        }
     }
 
     override static func requiresMainQueueSetup() -> Bool {
@@ -15,7 +16,7 @@ class DashXReactNative: RCTEventEmitter {
     }
 
     override func supportedEvents() -> [String] {
-        return ["messageReceived"]
+        return ["messageReceived", "linkReceived"]
     }
 
     @objc(configure:)
@@ -35,7 +36,8 @@ class DashXReactNative: RCTEventEmitter {
 
     @objc(identify:)
     func identify(_ options: NSDictionary) {
-        try? DashX.identify(withOptions: options)
+        let stringOptions = (options as? [String: Any])?.compactMapValues { ($0 as? CustomStringConvertible)?.description } ?? [:]
+        try? DashX.identify(options: stringOptions)
     }
 
     @objc(setIdentity:token:)
@@ -60,75 +62,64 @@ class DashXReactNative: RCTEventEmitter {
 
     @objc(fetchRecord:options:resolver:rejecter:)
     func fetchRecord(_ urn: String, options: NSDictionary?, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
-        let preview = options?["preview"] as? Bool
-        let language = options?["language"] as? String
-        let fields = options?["fields"] as? [[String: Any]]
-        let include = options?["include"] as? [[String: Any]]
-        let exclude = options?["exclude"] as? [[String: Any]]
-
         DashXClient.instance.fetchRecord(
             urn: urn,
-            preview: preview,
-            language: language,
-            fields: fields,
-            include: include,
-            exclude: exclude
+            preview: options?["preview"] as? Bool,
+            language: options?["language"] as? String,
+            fields: options?["fields"] as? [[String: Any]],
+            include: options?["include"] as? [[String: Any]],
+            exclude: options?["exclude"] as? [[String: Any]]
         ) { result in
             switch result {
-            case .success(let record):
-                resolve(record)
-            case .failure(let error):
-                reject("EUNSPECIFIED", error.localizedDescription, error)
+            case .success(let record): resolve(record)
+            case .failure(let error): reject("EUNSPECIFIED", error.localizedDescription, error)
             }
         }
     }
 
     @objc(searchRecords:options:resolver:rejecter:)
     func searchRecords(_ resource: String, options: NSDictionary?, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
-        let filter = options?["filter"] as? [String: Any]
-        let order = options?["order"] as? [[String: Any]]
-        let limit = options?["limit"] as? Int
-        let preview = options?["preview"] as? Bool
-        let language = options?["language"] as? String
-        let fields = options?["fields"] as? [[String: Any]]
-        let include = options?["include"] as? [[String: Any]]
-        let exclude = options?["exclude"] as? [[String: Any]]
-
         DashXClient.instance.searchRecords(
             resource: resource,
-            filter: filter,
-            order: order,
-            limit: limit,
-            preview: preview,
-            language: language,
-            fields: fields,
-            include: include,
-            exclude: exclude
+            filter: options?["filter"] as? [String: Any],
+            order: options?["order"] as? [[String: Any]],
+            limit: options?["limit"] as? Int,
+            page: options?["page"] as? Int,
+            preview: options?["preview"] as? Bool,
+            language: options?["language"] as? String,
+            fields: options?["fields"] as? [[String: Any]],
+            include: options?["include"] as? [[String: Any]],
+            exclude: options?["exclude"] as? [[String: Any]]
         ) { result in
             switch result {
-            case .success(let records):
-                resolve(records)
-            case .failure(let error):
-                reject("EUNSPECIFIED", error.localizedDescription, error)
+            case .success(let records): resolve(records)
+            case .failure(let error): reject("EUNSPECIFIED", error.localizedDescription, error)
             }
         }
     }
 
     @objc(fetchStoredPreferences:rejecter:)
     func fetchStoredPreferences(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
-        DashX.fetchStoredPreferences(
-            successCallback: CBU.resolveToSuccessCallback(resolve),
-            failureCallback: CBU.rejectToFailureCallback(reject)
-        )
+        DashXClient.instance.fetchStoredPreferences { result in
+            switch result {
+            case .success(let prefs): resolve(prefs)
+            case .failure(let error): reject("EUNSPECIFIED", error.localizedDescription, error)
+            }
+        }
     }
 
-    @objc(saveStoredPreferences:resolve:rejecter:)
-    func saveStoredPreferences(_ preferenceData: NSDictionary, _ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
-        DashX.saveStoredPreferences(
-            preferenceData: preferenceData,
-            successCallback: CBU.resolveToSuccessCallback(resolve),
-            failureCallback: CBU.rejectToFailureCallback(reject)
-        )
+    @objc(saveStoredPreferences:resolver:rejecter:)
+    func saveStoredPreferences(_ preferenceData: NSDictionary, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+        guard let dict = preferenceData as? [String: Any] else {
+            reject("EINVAL", "preferenceData must be a plain object", nil)
+            return
+        }
+        DashXClient.instance.saveStoredPreferences(preferenceData: dict) { result in
+            switch result {
+            case .success(let success): resolve(success)
+            case .failure(let error): reject("EUNSPECIFIED", error.localizedDescription, error)
+            }
+        }
     }
 
     @objc
@@ -146,18 +137,59 @@ class DashXReactNative: RCTEventEmitter {
         let logLevel = DashXLog.LogLevel(rawValue: level) ?? DashXLog.LogLevel.off
         DashXLog.setLogLevel(to: logLevel)
     }
-}
 
-class CallbackUtils {
-    static func resolveToSuccessCallback(_ resolve: @escaping RCTPromiseResolveBlock) -> SuccessCallback {
-        return resolve
+    @objc(uploadAsset:resource:attribute:resolver:rejecter:)
+    func uploadAsset(_ filePath: String, resource: String, attribute: String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+        let fileURL = URL(fileURLWithPath: filePath)
+        DashXClient.instance.uploadAsset(fileURL: fileURL, resource: resource, attribute: attribute) { result in
+            switch result {
+            case .success(let assetResponse):
+                if let data = try? JSONEncoder().encode(assetResponse),
+                   let dict = try? JSONSerialization.jsonObject(with: data) as? NSDictionary {
+                    resolve(dict)
+                } else {
+                    resolve(nil)
+                }
+            case .failure(let error):
+                reject("EUNSPECIFIED", error.localizedDescription, error)
+            }
+        }
     }
 
-    static func rejectToFailureCallback(_ reject: @escaping RCTPromiseRejectBlock) -> FailureCallback {
-        let result: FailureCallback = { (error) in
-            reject("EUNSPECIFIED", error.localizedDescription, error)
+    @objc(fetchAsset:resolver:rejecter:)
+    func fetchAsset(_ assetId: String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+        DashXClient.instance.fetchAsset(assetId: assetId) { result in
+            switch result {
+            case .success(let assetResponse):
+                if let data = try? JSONEncoder().encode(assetResponse),
+                   let dict = try? JSONSerialization.jsonObject(with: data) as? NSDictionary {
+                    resolve(dict)
+                } else {
+                    resolve(nil)
+                }
+            case .failure(let error):
+                reject("EUNSPECIFIED", error.localizedDescription, error)
+            }
         }
+    }
 
-        return result
+    @objc
+    func enableLifecycleTracking() {
+        DispatchQueue.main.async { DashX.enableLifecycleTracking() }
+    }
+
+    @objc
+    func enableAdTracking() {
+        DashX.enableAdTracking()
+    }
+
+    @objc(requestNotificationPermission:rejecter:)
+    func requestNotificationPermission(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+        DashX.requestNotificationPermission { status in resolve(status.rawValue) }
+    }
+
+    @objc(getNotificationPermissionStatus:rejecter:)
+    func getNotificationPermissionStatus(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+        DashX.getNotificationPermissionStatus { status in resolve(status.rawValue) }
     }
 }

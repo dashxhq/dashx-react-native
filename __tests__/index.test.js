@@ -12,6 +12,12 @@ const mockNativeModule = {
   subscribe: jest.fn(),
   unsubscribe: jest.fn(),
   setLogLevel: jest.fn(),
+  uploadAsset: jest.fn(),
+  fetchAsset: jest.fn(),
+  enableLifecycleTracking: jest.fn(),
+  enableAdTracking: jest.fn(),
+  requestNotificationPermission: jest.fn(),
+  getNotificationPermissionStatus: jest.fn(),
   addListener: jest.fn(),
   removeListeners: jest.fn(),
 };
@@ -273,6 +279,85 @@ describe('onMessageReceived', () => {
     const callback = jest.fn();
     const subscription = DashX.onMessageReceived(callback);
     expect(mockAddListener).toHaveBeenCalledWith('messageReceived', callback);
+    expect(subscription).toBeDefined();
+  });
+});
+
+// --- uploadAsset ---
+
+describe('uploadAsset', () => {
+  it('calls native uploadAsset with filePath, resource, attribute', () => {
+    mockNativeModule.uploadAsset.mockResolvedValue({ status: 'ready' });
+    const result = DashX.uploadAsset('/path/to/file.jpg', 'products', 'image');
+    expect(mockNativeModule.uploadAsset).toHaveBeenCalledWith(
+      '/path/to/file.jpg',
+      'products',
+      'image'
+    );
+    return expect(result).resolves.toEqual({ status: 'ready' });
+  });
+
+  it('throws if filePath is missing', () => {
+    expect(() => DashX.uploadAsset(null, 'r', 'a')).toThrow('filePath must be a string');
+  });
+
+  it('throws if resource is missing', () => {
+    expect(() => DashX.uploadAsset('/path', null, 'a')).toThrow('resource must be a string');
+  });
+
+  it('throws if attribute is missing', () => {
+    expect(() => DashX.uploadAsset('/path', 'r', null)).toThrow('attribute must be a string');
+  });
+});
+
+// --- fetchAsset ---
+
+describe('fetchAsset', () => {
+  it('calls native fetchAsset with assetId', () => {
+    mockNativeModule.fetchAsset.mockResolvedValue({ status: 'ready' });
+    const result = DashX.fetchAsset('asset-123');
+    expect(mockNativeModule.fetchAsset).toHaveBeenCalledWith('asset-123');
+    return expect(result).resolves.toEqual({ status: 'ready' });
+  });
+
+  it('throws if assetId is missing', () => {
+    expect(() => DashX.fetchAsset(null)).toThrow('assetId must be a string');
+  });
+});
+
+// --- requestNotificationPermission / getNotificationPermissionStatus ---
+
+describe('requestNotificationPermission', () => {
+  it('calls native requestNotificationPermission', () => {
+    mockNativeModule.requestNotificationPermission.mockResolvedValue(2);
+    const result = DashX.requestNotificationPermission();
+    expect(mockNativeModule.requestNotificationPermission).toHaveBeenCalled();
+    return expect(result).resolves.toBe(2);
+  });
+});
+
+describe('getNotificationPermissionStatus', () => {
+  it('calls native getNotificationPermissionStatus', () => {
+    mockNativeModule.getNotificationPermissionStatus.mockResolvedValue(1);
+    const result = DashX.getNotificationPermissionStatus();
+    expect(mockNativeModule.getNotificationPermissionStatus).toHaveBeenCalled();
+    return expect(result).resolves.toBe(1);
+  });
+});
+
+// --- onLinkReceived ---
+
+describe('onLinkReceived', () => {
+  it('throws if callback is not a function', () => {
+    expect(() => DashX.onLinkReceived('not a function')).toThrow(
+      'callback must be a function'
+    );
+  });
+
+  it('registers a listener for linkReceived events', () => {
+    const callback = jest.fn();
+    const subscription = DashX.onLinkReceived(callback);
+    expect(mockAddListener).toHaveBeenCalledWith('linkReceived', callback);
     expect(subscription).toBeDefined();
   });
 });
