@@ -40,7 +40,9 @@ const DashX = {
       throw new Error('DashX.configure: options must be an object');
     }
     if (!options.publicKey || typeof options.publicKey !== 'string') {
-      throw new Error('DashX.configure: publicKey is required and must be a string');
+      throw new Error(
+        'DashX.configure: publicKey is required and must be a string'
+      );
     }
     return getNativeDashX().configure(options);
   },
@@ -54,10 +56,14 @@ const DashX = {
 
   setIdentity(uid, token) {
     if (!uid || typeof uid !== 'string') {
-      throw new Error('DashX.setIdentity: uid is required and must be a string');
+      throw new Error(
+        'DashX.setIdentity: uid is required and must be a string'
+      );
     }
     if (!token || typeof token !== 'string') {
-      throw new Error('DashX.setIdentity: token is required and must be a string');
+      throw new Error(
+        'DashX.setIdentity: token is required and must be a string'
+      );
     }
     return getNativeDashX().setIdentity(uid, token);
   },
@@ -75,14 +81,18 @@ const DashX = {
 
   screen(screenName, data) {
     if (!screenName || typeof screenName !== 'string') {
-      throw new Error('DashX.screen: screenName is required and must be a string');
+      throw new Error(
+        'DashX.screen: screenName is required and must be a string'
+      );
     }
     return getNativeDashX().screen(screenName, data || null);
   },
 
   fetchRecord(urn, options = {}) {
     if (!urn || typeof urn !== 'string') {
-      throw new Error('DashX.fetchRecord: urn is required and must be a string (e.g. "article/123")');
+      throw new Error(
+        'DashX.fetchRecord: urn is required and must be a string (e.g. "article/123")'
+      );
     }
     if (options !== null && typeof options !== 'object') {
       throw new Error('DashX.fetchRecord: options must be an object');
@@ -92,7 +102,9 @@ const DashX = {
 
   searchRecords(resource, options = {}) {
     if (!resource || typeof resource !== 'string') {
-      throw new Error('DashX.searchRecords: resource is required and must be a string');
+      throw new Error(
+        'DashX.searchRecords: resource is required and must be a string'
+      );
     }
     if (options !== null && typeof options !== 'object') {
       throw new Error('DashX.searchRecords: options must be an object');
