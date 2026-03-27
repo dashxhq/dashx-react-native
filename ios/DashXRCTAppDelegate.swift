@@ -41,15 +41,15 @@ open class DashXRCTAppDelegate: RCTAppDelegate, MessagingDelegate, UNUserNotific
 
     // MARK: - APNS Token Management
 
-    public override func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+    open override func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
         DashXLog.d(tag: #function, "Unable to register for remote notifications: \(error.localizedDescription)")
     }
 
-    public override func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+    open override func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
         Messaging.messaging().setAPNSToken(deviceToken, type: .unknown)
     }
 
-    public func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
+    open func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
         guard let token = fcmToken else {
             DashXLog.d(tag: #function, "FCM Token is empty")
             return
@@ -62,13 +62,13 @@ open class DashXRCTAppDelegate: RCTAppDelegate, MessagingDelegate, UNUserNotific
 
     // MARK: - Push Notifications
 
-    public func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+    open func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
         let message = notification.request.content.userInfo
 
         // Pass notification reciept information to Firebase
         Messaging.messaging().appDidReceiveMessage(message)
 
-        DashX.trackNotification(message: message, event: .delivered)
+        DashX.trackMessage(message: message, event: .delivered)
 
         DashXEventEmitter.instance.dispatch(name: "messageReceived", body: bridgeSafePayload(from: message))
 
@@ -77,7 +77,7 @@ open class DashXRCTAppDelegate: RCTAppDelegate, MessagingDelegate, UNUserNotific
         completionHandler(presentationOptions)
     }
 
-    public func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
+    open func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
         let message = response.notification.request.content.userInfo
 
         // Pass notification reciept information to Firebase
@@ -86,9 +86,9 @@ open class DashXRCTAppDelegate: RCTAppDelegate, MessagingDelegate, UNUserNotific
         DashXEventEmitter.instance.dispatch(name: "messageReceived", body: bridgeSafePayload(from: message))
 
         if response.actionIdentifier == UNNotificationDismissActionIdentifier {
-            DashX.trackNotification(message: message, event: .dismissed)
+            DashX.trackMessage(message: message, event: .dismissed)
         } else {
-            DashX.trackNotification(message: message, event: .clicked)
+            DashX.trackMessage(message: message, event: .clicked)
 
             if let url = message.dashxNotificationUrl() {
                 handleLink(url: url)
@@ -100,7 +100,7 @@ open class DashXRCTAppDelegate: RCTAppDelegate, MessagingDelegate, UNUserNotific
         completionHandler()
     }
 
-    public override func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable: Any], fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
+    open override func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable: Any], fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
         // Pass notification reciept information to Firebase
         Messaging.messaging().appDidReceiveMessage(userInfo)
 
@@ -178,7 +178,7 @@ open class DashXRCTAppDelegate: RCTAppDelegate, MessagingDelegate, UNUserNotific
                     if let num = item as? NSNumber { return num }
                     if let d = item as? [AnyHashable: Any] { return bridgeSafePayload(from: d) }
                     if let a = item as? [Any] {
-                        return a.map { sub in
+                        return a.map { sub -> Any in
                             if let s = sub as? String { return s }
                             if let n = sub as? NSNumber { return n }
                             if let sd = sub as? [AnyHashable: Any] { return bridgeSafePayload(from: sd) }

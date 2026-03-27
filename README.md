@@ -30,7 +30,7 @@ _DashX SDK for React Native_
 
 | Platform | Minimum Version |
 |----------|----------------|
-| iOS | 12.0+ |
+| iOS | 13.0+ |
 | Android | SDK 26 (Android 8.0)+ |
 | React Native | 0.71+ |
 | Node.js | 16.0+ |
@@ -76,33 +76,66 @@ apply plugin: 'com.google.gms.google-services'
 
 ### Setup for iOS
 
-1. Add Firebase pods to your `Podfile`:
+1. Add the DashX and Firebase pods to your `Podfile` (inside your app target, alongside `use_react_native!`):
 
 ```ruby
-pod 'FirebaseMessaging', :modular_headers => true
+target 'YourApp' do
+  config = use_native_modules!
+
+  pod 'DashX', :git => 'https://github.com/dashxhq/dashx-ios.git', :tag => '1.1.3'
+  pod 'FirebaseCore', :modular_headers => true
+  pod 'FirebaseMessaging', :modular_headers => true
+
+  use_react_native!(
+    :path => config[:reactNativePath],
+    :app_path => "#{Pod::Config.instance.installation_root}/.."
+  )
+
+  # ...
+end
 ```
 
-2. Run pod install:
+2. If you haven't already, enable modular headers at the top of your `Podfile`:
+
+```ruby
+use_modular_headers!
+```
+
+3. Run pod install:
 
 ```sh
 cd ios && pod install
 ```
 
-3. Add your iOS app on [Firebase Console](https://console.firebase.google.com/): **Project Overview > Add App > iOS**
+4. Add your iOS app on [Firebase Console](https://console.firebase.google.com/): **Project Overview > Add App > iOS**
 
-4. Download `GoogleService-Info.plist` and add it to your Xcode project (right-click project > **Add Files**, ensure **Copy items if needed** is checked).
+5. Download `GoogleService-Info.plist` and add it to your Xcode project (right-click project > **Add Files**, ensure **Copy items if needed** is checked).
 
 #### Option A: Using `DashXRCTAppDelegate` (Recommended)
 
-The SDK ships a `DashXRCTAppDelegate` class that handles Firebase configuration, FCM token management, and push notification display out of the box. Subclass it in your `AppDelegate`:
+The SDK ships a `DashXRCTAppDelegate` class that handles the following automatically:
+
+- `FirebaseApp.configure()`
+- FCM token management (`Messaging.messaging().delegate`)
+- Push notification permission request
+- Notification display, tracking (delivered/opened/dismissed), and action button handling
+
+Subclass it in your `AppDelegate` — **do not** call `FirebaseApp.configure()` or set `Messaging.messaging().delegate` yourself, as the SDK handles both:
 
 ```swift
 import DashXReactNative
+import ReactAppDependencyProvider
 
 @main
 class AppDelegate: DashXRCTAppDelegate {
-  override func sourceURL(for bridge: RCTBridge) -> URL? {
-    bundleURL()
+  override var moduleName: String? {
+    get { "YourAppName" }
+    set {}
+  }
+
+  override init() {
+    super.init()
+    self.dependencyProvider = RCTAppDependencyProvider()
   }
 
   override func bundleURL() -> URL? {
@@ -113,17 +146,19 @@ class AppDelegate: DashXRCTAppDelegate {
     #endif
   }
 
-  // Called when a notification is tapped
+  // Optional: called when a notification is tapped
   override func notificationClicked(message: [AnyHashable: Any], actionIdentifier: String) {
     // Handle notification tap
   }
 
-  // Called when a notification arrives while the app is in the foreground
+  // Optional: called when a notification arrives while the app is in the foreground
   override func notificationDeliveredInForeground(message: [AnyHashable: Any]) -> UNNotificationPresentationOptions {
     return [.banner, .sound]
   }
 }
 ```
+
+All delegate methods in `DashXRCTAppDelegate` are declared `open`, so you can override any of them if you need custom behavior (e.g. `messaging(_:didReceiveRegistrationToken:)`, `application(_:didRegisterForRemoteNotificationsWithDeviceToken:)`).
 
 #### Option B: Manual setup in AppDelegate
 
@@ -229,7 +264,7 @@ DashX.screen('HomeScreen', {
 
 ### Fetch a record
 
-Fetch a single record by URN (e.g. `"article/123"`) with optional options (matches [dashx-android](https://github.com/dashxhq/dashx-android) `fetchRecord`). **Android only**; on iOS the promise rejects until the native SDK supports it.
+Fetch a single record by URN (e.g. `"article/123"`) with optional options. Supported on both Android and iOS.
 
 ```js
 const record = await DashX.fetchRecord('article/123', {
@@ -249,7 +284,7 @@ const record = await DashX.fetchRecord('article/123', {
 
 ### Search records
 
-Search records by resource with optional filter, order, limit, and other options (matches [dashx-android](https://github.com/dashxhq/dashx-android) `searchRecords`). **Android only**; on iOS the promise rejects until the native SDK supports it.
+Search records by resource with optional filter, order, limit, and other options. Supported on both Android and iOS.
 
 ```js
 const records = await DashX.searchRecords('article', {
@@ -387,8 +422,8 @@ const styles = StyleSheet.create({
 | `reset` | `()` | `void` | Clear the current user identity |
 | `track` | `(event: string, data?: object)` | `void` | Track a named event with optional data |
 | `screen` | `(screenName: string, data?: object)` | `void` | Track a screen view with optional data |
-| `fetchRecord` | `(urn: string, options?: object)` | `Promise<object>` | Fetch a single record by URN (e.g. `"article/123"`). Options: preview, language, fields, include, exclude. Android only; iOS rejects until implemented. |
-| `searchRecords` | `(resource: string, options?: object)` | `Promise<object[]>` | Search records (filter, order, limit, preview, language, fields, include, exclude). Android only; iOS rejects until implemented. |
+| `fetchRecord` | `(urn: string, options?: object)` | `Promise<object>` | Fetch a single record by URN (e.g. `"article/123"`). Options: preview, language, fields, include, exclude. |
+| `searchRecords` | `(resource: string, options?: object)` | `Promise<object[]>` | Search records (filter, order, limit, preview, language, fields, include, exclude). |
 | `subscribe` | `()` | `void` | Subscribe device for push notifications |
 | `unsubscribe` | `()` | `void` | Unsubscribe device from push notifications |
 | `fetchStoredPreferences` | `()` | `Promise<object>` | Fetch stored notification preferences |
@@ -397,6 +432,27 @@ const styles = StyleSheet.create({
 | `onMessageReceived` | `(callback: function)` | `EmitterSubscription` | Listen for incoming push notifications |
 
 For detailed usage and advanced features, refer to the [DashX documentation](https://docs.dashx.com/developer).
+
+### Error Codes
+
+Promise rejections from native methods use a consistent error code across both platforms:
+
+| Code | Description |
+|------|-------------|
+| `EUNSPECIFIED` | An unspecified error occurred |
+
+The error code is available on the `code` property of the rejected error:
+
+```js
+try {
+  await DashX.fetchRecord('article/123');
+} catch (error) {
+  console.log(error.code);    // "EUNSPECIFIED"
+  console.log(error.message); // human-readable description
+}
+```
+
+A `DashXErrorCode` enum is exported from the TypeScript definitions for type-safe comparisons.
 
 ## Contributing
 

@@ -50,22 +50,68 @@ class DashXReactNative: RCTEventEmitter {
 
     @objc(track:data:)
     func track(_ event: String, _ data: NSDictionary?) {
-        DashX.track(event, withData: data)
+        DashX.track(event, withData: data as? [String: Any])
     }
 
     @objc(screen:data:)
     func screen(_ screenName: String, _ data: NSDictionary?) {
-        DashX.screen(screenName, withData: data)
+        DashX.screen(screenName, withData: data as? [String: Any])
     }
 
     @objc(fetchRecord:options:resolver:rejecter:)
     func fetchRecord(_ urn: String, options: NSDictionary?, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
-        reject("EUNIMPLEMENTED", "fetchRecord is not yet implemented on iOS", nil)
+        let preview = options?["preview"] as? Bool
+        let language = options?["language"] as? String
+        let fields = options?["fields"] as? [[String: Any]]
+        let include = options?["include"] as? [[String: Any]]
+        let exclude = options?["exclude"] as? [[String: Any]]
+
+        DashXClient.instance.fetchRecord(
+            urn: urn,
+            preview: preview,
+            language: language,
+            fields: fields,
+            include: include,
+            exclude: exclude
+        ) { result in
+            switch result {
+            case .success(let record):
+                resolve(record)
+            case .failure(let error):
+                reject("EUNSPECIFIED", error.localizedDescription, error)
+            }
+        }
     }
 
     @objc(searchRecords:options:resolver:rejecter:)
     func searchRecords(_ resource: String, options: NSDictionary?, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
-        reject("EUNIMPLEMENTED", "searchRecords is not yet implemented on iOS", nil)
+        let filter = options?["filter"] as? [String: Any]
+        let order = options?["order"] as? [[String: Any]]
+        let limit = options?["limit"] as? Int
+        let preview = options?["preview"] as? Bool
+        let language = options?["language"] as? String
+        let fields = options?["fields"] as? [[String: Any]]
+        let include = options?["include"] as? [[String: Any]]
+        let exclude = options?["exclude"] as? [[String: Any]]
+
+        DashXClient.instance.searchRecords(
+            resource: resource,
+            filter: filter,
+            order: order,
+            limit: limit,
+            preview: preview,
+            language: language,
+            fields: fields,
+            include: include,
+            exclude: exclude
+        ) { result in
+            switch result {
+            case .success(let records):
+                resolve(records)
+            case .failure(let error):
+                reject("EUNSPECIFIED", error.localizedDescription, error)
+            }
+        }
     }
 
     @objc(fetchStoredPreferences:rejecter:)
@@ -109,7 +155,7 @@ class CallbackUtils {
 
     static func rejectToFailureCallback(_ reject: @escaping RCTPromiseRejectBlock) -> FailureCallback {
         let result: FailureCallback = { (error) in
-            reject("\((error as NSError).code)", error.localizedDescription, error)
+            reject("EUNSPECIFIED", error.localizedDescription, error)
         }
 
         return result

@@ -1,5 +1,14 @@
 import { EmitterSubscription } from 'react-native';
 
+/**
+ * Error codes returned by native SDKs in promise rejections.
+ * Consistent across iOS and Android.
+ */
+export enum DashXErrorCode {
+  /** An unspecified error occurred. */
+  EUNSPECIFIED = 'EUNSPECIFIED',
+}
+
 export interface ConfigureOptions {
   publicKey: string;
   baseURI?: string;
