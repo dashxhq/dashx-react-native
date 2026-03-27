@@ -30,7 +30,7 @@ _DashX SDK for React Native_
 
 | Platform | Minimum Version |
 |----------|----------------|
-| iOS | 12.0+ |
+| iOS | 13.0+ |
 | Android | SDK 26 (Android 8.0)+ |
 | React Native | 0.71+ |
 | Node.js | 16.0+ |
@@ -76,33 +76,67 @@ apply plugin: 'com.google.gms.google-services'
 
 ### Setup for iOS
 
-1. Add Firebase pods to your `Podfile`:
+#### Step 1: Add pods to your Podfile
+
+The DashX iOS SDK is not published to CocoaPods trunk. Add it directly from GitHub along with the Firebase pods required for FCM push notifications.
+
+Add `use_modular_headers!` at the top of your `ios/Podfile`, then add the pods inside the target block:
 
 ```ruby
-pod 'FirebaseMessaging', :modular_headers => true
+use_modular_headers!
+
+target 'YourApp' do
+  # ... other pods
+
+  pod 'DashX', :git => 'https://github.com/dashxhq/dashx-ios.git', :tag => '1.1.4'
+  pod 'FirebaseCore'
+  pod 'FirebaseMessaging'
+
+  use_react_native!(...)
+end
 ```
 
-2. Run pod install:
+Then run:
 
 ```sh
 cd ios && pod install
 ```
 
-3. Add your iOS app on [Firebase Console](https://console.firebase.google.com/): **Project Overview > Add App > iOS**
+#### Step 2: Add GoogleService-Info.plist
 
-4. Download `GoogleService-Info.plist` and add it to your Xcode project (right-click project > **Add Files**, ensure **Copy items if needed** is checked).
+1. Add your iOS app on [Firebase Console](https://console.firebase.google.com/): **Project Overview > Add App > iOS**
+2. Download `GoogleService-Info.plist` and add it to your Xcode project (right-click project root > **Add Files to "YourApp"**, ensure **Copy items if needed** is checked)
 
-#### Option A: Using `DashXRCTAppDelegate` (Recommended)
+#### Step 3: Enable Push Notifications capability
 
-The SDK ships a `DashXRCTAppDelegate` class that handles Firebase configuration, FCM token management, and push notification display out of the box. Subclass it in your `AppDelegate`:
+In Xcode, select your app target > **Signing & Capabilities** > **+ Capability** > add **Push Notifications**.
+
+#### Step 4: Configure your AppDelegate
+
+The SDK ships `DashXRCTAppDelegate` which handles permission requests, notification display, and universal link forwarding. Subclass it in your `AppDelegate.swift` and configure Firebase directly:
 
 ```swift
 import DashXReactNative
+import ReactAppDependencyProvider
+import FirebaseCore
+import FirebaseMessaging
+import DashX
+import UserNotifications
 
 @main
 class AppDelegate: DashXRCTAppDelegate {
-  override func sourceURL(for bridge: RCTBridge) -> URL? {
-    bundleURL()
+  override var moduleName: String { "YourAppName" }
+
+  override func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+    self.dependencyProvider = RCTAppDependencyProvider()
+    FirebaseApp.configure()
+    Messaging.messaging().delegate = self
+    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+
+  // Forward the APNS token to Firebase so it can exchange it for an FCM token
+  override func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+    Messaging.messaging().setAPNSToken(deviceToken, type: .unknown)
   }
 
   override func bundleURL() -> URL? {
@@ -112,46 +146,62 @@ class AppDelegate: DashXRCTAppDelegate {
     Bundle.main.url(forResource: "main", withExtension: "jsbundle")
     #endif
   }
+}
 
-  // Called when a notification is tapped
-  override func notificationClicked(message: [AnyHashable: Any], actionIdentifier: String) {
-    // Handle notification tap
-  }
-
-  // Called when a notification arrives while the app is in the foreground
-  override func notificationDeliveredInForeground(message: [AnyHashable: Any]) -> UNNotificationPresentationOptions {
-    return [.banner, .sound]
+// Receive the FCM token and pass it to DashX
+extension AppDelegate: MessagingDelegate {
+  func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
+    guard let token = fcmToken else { return }
+    DashX.setFCMToken(to: token)
   }
 }
 ```
 
-#### Option B: Manual setup in AppDelegate
+`DashXRCTAppDelegate` handles the rest automatically:
+- Requests notification permission on launch
+- Displays notifications (banner + sound by default, even while app is in the foreground)
+- Tracks delivery, clicks, and dismissals
+- Forwards universal links to the JS `onLinkReceived` listener
 
-If you prefer manual control, import Firebase at the top of `/ios/{projectName}/AppDelegate.m`:
+**Override points** (all optional):
 
-```objective-c
-#import <FirebaseCore/FirebaseCore.h>
-#import <FirebaseMessaging/FirebaseMessaging.h>
-```
-
-Then inside `didFinishLaunchingWithOptions`:
-
-```objective-c
-[UNUserNotificationCenter currentNotificationCenter].delegate = self;
-UNAuthorizationOptions authOptions = UNAuthorizationOptionAlert | UNAuthorizationOptionSound | UNAuthorizationOptionBadge;
-[[UNUserNotificationCenter currentNotificationCenter]
-    requestAuthorizationWithOptions:authOptions
-    completionHandler:^(BOOL granted, NSError * _Nullable error) {
-}];
-
-[application registerForRemoteNotifications];
-
-if ([FIRApp defaultApp] == nil) {
-  [FIRApp configure];
+```swift
+/// Control foreground notification presentation (default: [.banner, .sound])
+override func notificationDeliveredInForeground(message: [AnyHashable: Any]) -> UNNotificationPresentationOptions {
+  return [.banner, .sound, .badge]
 }
 
-[FIRMessaging messaging].delegate = self;
+// Called when the user taps a notification or one of its action buttons
+override func notificationClicked(message: [AnyHashable: Any], actionIdentifier: String) {
+  // custom tap handling
+}
+
+// Called when a universal/deep link arrives
+override func handleLink(url: URL) {
+  // custom link handling
+}
 ```
+
+#### Step 5: Subscribe in JavaScript
+
+Call `DashX.subscribe()` at app startup so the SDK registers the device as soon as the FCM token is available:
+
+```js
+import { useEffect } from 'react';
+import DashX from '@dashx/react-native';
+
+DashX.configure({ publicKey: 'your-public-key' });
+
+export default function App() {
+  useEffect(() => {
+    DashX.subscribe();
+  }, []);
+
+  // ...
+}
+```
+
+> **Without Firebase:** If you are not using FCM, omit the Firebase pods and the Firebase-related `AppDelegate` code. The SDK will still handle APNS permission requests and notification display via `DashXRCTAppDelegate`.
 
 ## Usage
 
@@ -229,10 +279,10 @@ DashX.screen('HomeScreen', {
 
 ### Fetch a record
 
-Fetch a single record by URN (e.g. `"article/123"`) with optional options (matches [dashx-android](https://github.com/dashxhq/dashx-android) `fetchRecord`). **Android only**; on iOS the promise rejects until the native SDK supports it.
+Fetch a single record by URN (e.g. `"article/uuid"`). The URN must use the full UUID form of the record ID.
 
 ```js
-const record = await DashX.fetchRecord('article/123', {
+const record = await DashX.fetchRecord('article/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx', {
   preview: false,
   language: 'en',
   // fields, include, exclude as arrays of objects if needed
@@ -249,13 +299,12 @@ const record = await DashX.fetchRecord('article/123', {
 
 ### Search records
 
-Search records by resource with optional filter, order, limit, and other options (matches [dashx-android](https://github.com/dashxhq/dashx-android) `searchRecords`). **Android only**; on iOS the promise rejects until the native SDK supports it.
-
 ```js
 const records = await DashX.searchRecords('article', {
   filter: { status: 'published' },
   order: [{ field: 'createdAt', direction: 'desc' }],
   limit: 10,
+  page: 1,
   preview: false,
   language: 'en',
 });
@@ -266,6 +315,7 @@ const records = await DashX.searchRecords('article', {
 | `filter` | `object` | Filter criteria |
 | `order` | `object[]` | Sort order (e.g. `[{ field, direction }]`) |
 | `limit` | `number` | Max records to return |
+| `page` | `number` | Page number for pagination |
 | `preview` | `boolean` | Preview/draft content |
 | `language` | `string` | Content language |
 | `fields` | `object[]` | Fields to return |
@@ -286,6 +336,31 @@ Unsubscribe:
 DashX.unsubscribe();
 ```
 
+### Request notification permission (iOS)
+
+Prompt the user for push notification permission. Returns a `NotificationPermissionStatus` integer matching `UNAuthorizationStatus`:
+
+| Value | Meaning |
+|-------|---------|
+| `0` | Not determined |
+| `1` | Denied |
+| `2` | Authorized |
+| `3` | Provisional |
+| `4` | Ephemeral |
+
+```js
+const status = await DashX.requestNotificationPermission();
+if (status === 2) {
+  DashX.subscribe();
+}
+```
+
+To check the current status without prompting the user:
+
+```js
+const status = await DashX.getNotificationPermissionStatus();
+```
+
 ### Listen for incoming messages
 
 Register a listener to handle push notifications when they arrive:
@@ -302,13 +377,26 @@ useEffect(() => {
 }, []);
 ```
 
+### Listen for deep links / universal links (iOS)
+
+Register a listener that fires when the SDK receives a universal link. On the native side, `DashXRCTAppDelegate` forwards links via `DashX.handleUserActivity` automatically.
+
+```js
+useEffect(() => {
+  const subscription = DashX.onLinkReceived((url) => {
+    console.log('Link received:', url);
+  });
+
+  return () => subscription.remove();
+}, []);
+```
+
 ### Notification preferences
 
 Fetch the user's stored notification preferences:
 
 ```js
 const preferences = await DashX.fetchStoredPreferences();
-console.log(preferences);
 ```
 
 Save updated preferences:
@@ -320,6 +408,46 @@ await DashX.saveStoredPreferences({
 });
 ```
 
+### Upload an asset (iOS)
+
+Upload a local file to DashX and associate it with a resource and attribute:
+
+```js
+const response = await DashX.uploadAsset(
+  '/path/to/local/file.jpg',
+  'user',       // resource name
+  'avatar'      // attribute name
+);
+// response: { status, data: { asset: { status, url, playbackIds } } }
+```
+
+### Fetch an asset (iOS)
+
+Retrieve the status and URL of a previously uploaded asset by its ID:
+
+```js
+const asset = await DashX.fetchAsset('asset-id');
+// asset: { status, data: { asset: { status, url, playbackIds } } }
+```
+
+### Lifecycle tracking (iOS)
+
+Enable automatic app lifecycle event tracking (app opened, backgrounded, etc.):
+
+```js
+DashX.enableLifecycleTracking(); // no-op on Android
+```
+
+### Ad tracking / ATT (iOS)
+
+Request App Tracking Transparency permission and enable IDFA tracking:
+
+```js
+DashX.enableAdTracking(); // no-op on Android
+```
+
+Make sure `NSUserTrackingUsageDescription` is set in your `Info.plist`.
+
 ### Logging
 
 Set the SDK log level for debugging:
@@ -328,75 +456,54 @@ Set the SDK log level for debugging:
 DashX.setLogLevel(1); // 0 = off, 1 = errors, 2 = debug
 ```
 
-### Android example
-
-Below is a full example of integrating DashX in a React Native Android app:
-
-```js
-// App.js
-import React from 'react';
-import { View, Text, Button, StyleSheet } from 'react-native';
-import DashX from '@dashx/react-native';
-
-// Initialize once at app load
-DashX.configure({ publicKey: 'your-public-key' });
-DashX.subscribe();
-
-export default function App() {
-  const handleLogin = () => {
-    DashX.setIdentity('user-123', 'auth-token');
-    DashX.identify({
-      firstName: 'Jane',
-      lastName: 'Doe',
-      email: 'jane@example.com',
-    });
-  };
-
-  const handleTrack = () => {
-    DashX.track('Button Pressed', { screen: 'Home' });
-  };
-
-  const handleLogout = () => {
-    DashX.unsubscribe();
-    DashX.reset();
-  };
-
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>DashX React Native Demo</Text>
-      <Button title="Login" onPress={handleLogin} />
-      <Button title="Track Event" onPress={handleTrack} />
-      <Button title="Logout" onPress={handleLogout} />
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  title: { fontSize: 24, marginBottom: 20 },
-});
-```
-
 ## API Reference
 
-| Method | Signature | Returns | Description |
-|--------|-----------|---------|-------------|
-| `configure` | `(options: object)` | `void` | Initialize the SDK with your public key |
-| `identify` | `(options: object)` | `void` | Identify the current user with traits |
-| `setIdentity` | `(uid: string, token: string)` | `void` | Set user identity with UID and auth token |
-| `reset` | `()` | `void` | Clear the current user identity |
-| `track` | `(event: string, data?: object)` | `void` | Track a named event with optional data |
-| `screen` | `(screenName: string, data?: object)` | `void` | Track a screen view with optional data |
-| `fetchRecord` | `(urn: string, options?: object)` | `Promise<object>` | Fetch a single record by URN (e.g. `"article/123"`). Options: preview, language, fields, include, exclude. Android only; iOS rejects until implemented. |
-| `searchRecords` | `(resource: string, options?: object)` | `Promise<object[]>` | Search records (filter, order, limit, preview, language, fields, include, exclude). Android only; iOS rejects until implemented. |
-| `subscribe` | `()` | `void` | Subscribe device for push notifications |
-| `unsubscribe` | `()` | `void` | Unsubscribe device from push notifications |
-| `fetchStoredPreferences` | `()` | `Promise<object>` | Fetch stored notification preferences |
-| `saveStoredPreferences` | `(data: object)` | `Promise<object>` | Save notification preferences |
-| `setLogLevel` | `(level: number)` | `void` | Set SDK log verbosity |
-| `onMessageReceived` | `(callback: function)` | `EmitterSubscription` | Listen for incoming push notifications |
+| Method | Signature | Platforms | Returns | Description |
+|--------|-----------|-----------|---------|-------------|
+| `configure` | `(options: object)` | iOS, Android | `void` | Initialize the SDK with your public key |
+| `identify` | `(options: object)` | iOS, Android | `void` | Identify the current user with traits |
+| `setIdentity` | `(uid: string, token: string)` | iOS, Android | `void` | Set user identity with UID and auth token |
+| `reset` | `()` | iOS, Android | `void` | Clear the current user identity |
+| `track` | `(event: string, data?: object)` | iOS, Android | `void` | Track a named event with optional data |
+| `screen` | `(screenName: string, data?: object)` | iOS, Android | `void` | Track a screen view |
+| `fetchRecord` | `(urn: string, options?: object)` | iOS, Android | `Promise<object>` | Fetch a single record by URN (`"resource/uuid"`) |
+| `searchRecords` | `(resource: string, options?: object)` | iOS, Android | `Promise<object[]>` | Search records with filter, order, limit, page, etc. |
+| `subscribe` | `()` | iOS, Android | `void` | Subscribe device for push notifications |
+| `unsubscribe` | `()` | iOS, Android | `void` | Unsubscribe device from push notifications |
+| `fetchStoredPreferences` | `()` | iOS, Android | `Promise<object>` | Fetch stored notification preferences |
+| `saveStoredPreferences` | `(data: object)` | iOS, Android | `Promise<object>` | Save notification preferences |
+| `setLogLevel` | `(level: number)` | iOS, Android | `void` | Set SDK log verbosity (0=off, 1=errors, 2=debug) |
+| `onMessageReceived` | `(callback: function)` | iOS, Android | `EmitterSubscription` | Listen for incoming push notifications |
+| `requestNotificationPermission` | `()` | iOS | `Promise<number>` | Prompt for push permission; resolves with `UNAuthorizationStatus` (0-4) |
+| `getNotificationPermissionStatus` | `()` | iOS | `Promise<number>` | Get current push permission status without prompting |
+| `onLinkReceived` | `(callback: function)` | iOS | `EmitterSubscription` | Listen for universal/deep link events |
+| `uploadAsset` | `(filePath: string, resource: string, attribute: string)` | iOS | `Promise<AssetResponse>` | Upload a local file and associate it with a resource attribute |
+| `fetchAsset` | `(assetId: string)` | iOS | `Promise<AssetResponse>` | Fetch status and URL of an uploaded asset |
+| `enableLifecycleTracking` | `()` | iOS | `void` | Enable automatic app lifecycle event tracking |
+| `enableAdTracking` | `()` | iOS | `void` | Request ATT permission and enable IDFA tracking |
 
 For detailed usage and advanced features, refer to the [DashX documentation](https://docs.dashx.com/developer).
+
+### Error Codes
+
+Promise rejections from native methods use a consistent error code across both platforms:
+
+| Code | Description |
+|------|-------------|
+| `EUNSPECIFIED` | An unspecified error occurred |
+
+The error code is available on the `code` property of the rejected error:
+
+```js
+try {
+  await DashX.fetchRecord('article/123');
+} catch (error) {
+  console.log(error.code);    // "EUNSPECIFIED"
+  console.log(error.message); // human-readable description
+}
+```
+
+A `DashXErrorCode` enum is exported from the TypeScript definitions for type-safe comparisons.
 
 ## Contributing
 
