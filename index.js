@@ -134,6 +134,51 @@ const DashX = {
     }
     return getEventEmitter().addListener('messageReceived', callback);
   },
+
+  uploadAsset(filePath, resource, attribute) {
+    if (!filePath || typeof filePath !== 'string') {
+      throw new Error('DashX.uploadAsset: filePath must be a string');
+    }
+    if (!resource || typeof resource !== 'string') {
+      throw new Error('DashX.uploadAsset: resource must be a string');
+    }
+    if (!attribute || typeof attribute !== 'string') {
+      throw new Error('DashX.uploadAsset: attribute must be a string');
+    }
+    return getNativeDashX().uploadAsset(filePath, resource, attribute);
+  },
+
+  fetchAsset(assetId) {
+    if (!assetId || typeof assetId !== 'string') {
+      throw new Error('DashX.fetchAsset: assetId must be a string');
+    }
+    return getNativeDashX().fetchAsset(assetId);
+  },
+
+  enableLifecycleTracking() {
+    if (Platform.OS !== 'ios') return;
+    return getNativeDashX().enableLifecycleTracking();
+  },
+
+  enableAdTracking() {
+    if (Platform.OS !== 'ios') return;
+    return getNativeDashX().enableAdTracking();
+  },
+
+  requestNotificationPermission() {
+    return getNativeDashX().requestNotificationPermission();
+  },
+
+  getNotificationPermissionStatus() {
+    return getNativeDashX().getNotificationPermissionStatus();
+  },
+
+  onLinkReceived(callback) {
+    if (typeof callback !== 'function') {
+      throw new Error('DashX.onLinkReceived: callback must be a function');
+    }
+    return getEventEmitter().addListener('linkReceived', callback);
+  },
 };
 
 export default DashX;

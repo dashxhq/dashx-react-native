@@ -29,4 +29,16 @@ RCT_EXTERN_METHOD(unsubscribe);
 
 RCT_EXTERN_METHOD(setLogLevel:(int *)level);
 
+RCT_EXTERN_METHOD(uploadAsset:(NSString *)filePath resource:(NSString *)resource attribute:(NSString *)attribute resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject);
+
+RCT_EXTERN_METHOD(fetchAsset:(NSString *)assetId resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject);
+
+RCT_EXTERN_METHOD(enableLifecycleTracking);
+
+RCT_EXTERN_METHOD(enableAdTracking);
+
+RCT_EXTERN_METHOD(requestNotificationPermission:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject);
+
+RCT_EXTERN_METHOD(getNotificationPermissionStatus:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject);
+
 @end
