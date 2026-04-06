@@ -10,9 +10,7 @@
   <h4>
     <a href="https://dashx.com">Website</a>
     <span> | </span>
-    <a href="https://dashxdemo.com">Demos</a>
-    <span> | </span>
-    <a href="https://docs.dashx.com/developer">Documentation</a>
+    <a href="https://docs.dashx.com">Documentation</a>
   </h4>
 </div>
 
@@ -482,7 +480,7 @@ DashX.setLogLevel(1); // 0 = off, 1 = errors, 2 = debug
 | `enableLifecycleTracking` | `()` | iOS | `void` | Enable automatic app lifecycle event tracking |
 | `enableAdTracking` | `()` | iOS | `void` | Request ATT permission and enable IDFA tracking |
 
-For detailed usage and advanced features, refer to the [DashX documentation](https://docs.dashx.com/developer).
+For detailed usage and advanced features, refer to the [DashX documentation](https://docs.dashx.com).
 
 ### Error Codes
 

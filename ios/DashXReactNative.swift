@@ -41,8 +41,8 @@ class DashXReactNative: RCTEventEmitter {
     }
 
     @objc(setIdentity:token:)
-    func setIdentity(_ uid: String, _ token: String) {
-        DashX.setIdentity(uid: uid, token: token)
+    func setIdentity(_ uid: NSString?, _ token: NSString?) {
+        DashX.setIdentity(uid: uid as String?, token: token as String?)
     }
 
     @objc

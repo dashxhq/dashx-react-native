@@ -12,7 +12,7 @@ def getVersionFromNpm() {
 
 android {
     namespace 'com.dashx.rn.sdk'
-    compileSdkVersion 35
+    compileSdkVersion 34
 
     buildFeatures {
         buildConfig = true
@@ -55,5 +55,5 @@ dependencies {
     // Ensure Firebase Messaging types are available for FCM service subclass
     implementation 'com.google.firebase:firebase-messaging-ktx:23.1.2'
 
-    implementation "com.dashx:dashx-android:1.1.5"
+    implementation "com.dashx:dashx-android:1.1.7"
 }
