@@ -10,30 +10,22 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 
-class DashXReactNativeModule(private val reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
-    private val tag = DashXReactNativeModule::class.java.simpleName
+class DashXReactNativeModuleImpl(private val reactContext: ReactApplicationContext) {
+    private val tag = DashXReactNativeModuleImpl::class.java.simpleName
 
-    override fun initialize() {
-        super.initialize()
+    fun initialize() {
         MessageReceivedEventHolder.reactContext = reactContext
     }
 
-    override fun invalidate() {
+    fun invalidate() {
         MessageReceivedEventHolder.reactContext = null
-        super.invalidate()
     }
 
-    override fun getName(): String {
-        return "DashXReactNative"
-    }
-
-    @ReactMethod
-    fun setLogLevel(level: Int) {
-        val logLevel = LogLevel.values().firstOrNull { it.code == level } ?: LogLevel.OFF
+    fun setLogLevel(level: Double) {
+        val logLevel = LogLevel.values().firstOrNull { it.code == level.toInt() } ?: LogLevel.OFF
         DashXLog.setLogLevel(logLevel)
     }
 
-    @ReactMethod
     fun configure(options: ReadableMap) {
         DashX.configure(
             reactContext,
@@ -43,7 +35,6 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
         )
     }
 
-    @ReactMethod
     fun identify(options: ReadableMap?) {
         val optionsHashMap = options?.toHashMap()
             ?.filterValues { it != null }
@@ -51,17 +42,14 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
         DashX.identify(optionsHashMap?.let { HashMap(it) })
     }
 
-    @ReactMethod
     fun setIdentity(uid: String?, token: String?) {
         DashX.setIdentity(uid, token)
     }
 
-    @ReactMethod
     fun reset() {
         DashX.reset()
     }
 
-    @ReactMethod
     fun track(event: String, data: ReadableMap?) {
         val jsonData = try {
             data?.toHashMap()
@@ -76,7 +64,6 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
         DashX.track(event, jsonData)
     }
 
-    @ReactMethod
     fun screen(screenName: String, data: ReadableMap?) {
         val screenData = data?.toHashMap()
             ?.filterValues { it != null }
@@ -86,7 +73,6 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
         DashX.screen(screenName, screenData)
     }
 
-    @ReactMethod
     fun fetchRecord(urn: String, options: ReadableMap?, promise: Promise) {
         val preview = options?.getBooleanIfPresent("preview")
         val language = options?.getStringIfPresent("language")
@@ -94,21 +80,21 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
             convertReadableArrayToKJsonList(options?.getArray("fields"))
         } catch (e: Exception) {
             DashXLog.d(tag, e.message)
-            promise.reject("EUNSPECIFIED", "Error parsing fields: ${e.message}")
+            promise.reject(E_UNSPECIFIED, "Error parsing fields: ${e.message}")
             return
         }
         val include = try {
             convertReadableArrayToKJsonList(options?.getArray("include"))
         } catch (e: Exception) {
             DashXLog.d(tag, e.message)
-            promise.reject("EUNSPECIFIED", "Error parsing include: ${e.message}")
+            promise.reject(E_UNSPECIFIED, "Error parsing include: ${e.message}")
             return
         }
         val exclude = try {
             convertReadableArrayToKJsonList(options?.getArray("exclude"))
         } catch (e: Exception) {
             DashXLog.d(tag, e.message)
-            promise.reject("EUNSPECIFIED", "Error parsing exclude: ${e.message}")
+            promise.reject(E_UNSPECIFIED, "Error parsing exclude: ${e.message}")
             return
         }
 
@@ -120,7 +106,7 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
             include = include,
             exclude = exclude,
             onError = {
-                promise.reject("EUNSPECIFIED", it.message)
+                promise.reject(E_UNSPECIFIED, it.message)
             },
             onSuccess = {
                 promise.resolve(convertJsonToMap(convertKJsonToJson(it)))
@@ -128,20 +114,19 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
         )
     }
 
-    @ReactMethod
     fun searchRecords(resource: String, options: ReadableMap?, promise: Promise) {
         val jsonFilter = try {
             convertMapToJson(options?.getMap("filter"))?.let { convertJsonToKJson(it) }
         } catch (e: Exception) {
             DashXLog.d(tag, e.message)
-            promise.reject("EUNSPECIFIED", "Error parsing filter: ${e.message}")
+            promise.reject(E_UNSPECIFIED, "Error parsing filter: ${e.message}")
             return
         }
         val order = try {
             convertReadableArrayToKJsonList(options?.getArray("order"))
         } catch (e: Exception) {
             DashXLog.d(tag, e.message)
-            promise.reject("EUNSPECIFIED", "Error parsing order: ${e.message}")
+            promise.reject(E_UNSPECIFIED, "Error parsing order: ${e.message}")
             return
         }
         val limit = options?.getIntIfPresent("limit")
@@ -151,21 +136,21 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
             convertReadableArrayToKJsonList(options?.getArray("fields"))
         } catch (e: Exception) {
             DashXLog.d(tag, e.message)
-            promise.reject("EUNSPECIFIED", "Error parsing fields: ${e.message}")
+            promise.reject(E_UNSPECIFIED, "Error parsing fields: ${e.message}")
             return
         }
         val include = try {
             convertReadableArrayToKJsonList(options?.getArray("include"))
         } catch (e: Exception) {
             DashXLog.d(tag, e.message)
-            promise.reject("EUNSPECIFIED", "Error parsing include: ${e.message}")
+            promise.reject(E_UNSPECIFIED, "Error parsing include: ${e.message}")
             return
         }
         val exclude = try {
             convertReadableArrayToKJsonList(options?.getArray("exclude"))
         } catch (e: Exception) {
             DashXLog.d(tag, e.message)
-            promise.reject("EUNSPECIFIED", "Error parsing exclude: ${e.message}")
+            promise.reject(E_UNSPECIFIED, "Error parsing exclude: ${e.message}")
             return
         }
 
@@ -180,7 +165,7 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
             include = include,
             exclude = exclude,
             onError = {
-                promise.reject("EUNSPECIFIED", it.message)
+                promise.reject(E_UNSPECIFIED, it.message)
             },
             onSuccess = { records ->
                 val readableArray = Arguments.createArray()
@@ -192,11 +177,10 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
         )
     }
 
-    @ReactMethod
     fun fetchStoredPreferences(promise: Promise) {
         DashX.fetchStoredPreferences(
             onError = {
-                promise.reject("EUNSPECIFIED", it.message)
+                promise.reject(E_UNSPECIFIED, it.message)
             },
             onSuccess = { content ->
                 promise.resolve(convertJsonToMap(convertKJsonToJson(Json.decodeFromString<JsonObject>(Json.encodeToString(content)))))
@@ -204,14 +188,13 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
         )
     }
 
-    @ReactMethod
     fun saveStoredPreferences(preferenceData: ReadableMap?, promise: Promise) {
         val preferencesString = MapUtil.toJSONElement(preferenceData).toString()
 
         DashX.saveStoredPreferences(
             Json.decodeFromString<JsonObject>(preferencesString),
             onError = {
-                promise.reject("EUNSPECIFIED", it.message)
+                promise.reject(E_UNSPECIFIED, it.message)
             },
             onSuccess = { content ->
                 promise.resolve(convertJsonToMap(convertKJsonToJson(Json.decodeFromString<JsonObject>(Json.encodeToString(content)))))
@@ -219,13 +202,54 @@ class DashXReactNativeModule(private val reactContext: ReactApplicationContext) 
         )
     }
 
-    @ReactMethod
     fun subscribe() {
         DashX.subscribe()
     }
 
-    @ReactMethod
     fun unsubscribe() {
         DashX.unsubscribe()
+    }
+
+    // --- iOS-only methods: no-op stubs on Android (JS guards prevent these from being called) ---
+
+    fun enableLifecycleTracking() {
+        // iOS-only; no-op on Android
+    }
+
+    fun enableAdTracking() {
+        // iOS-only; no-op on Android
+    }
+
+    fun processURL(url: String, source: String?, forwardToLinkHandler: Boolean) {
+        // iOS-only; no-op on Android
+    }
+
+    fun trackNotificationNavigation(action: ReadableMap?, notificationId: String?) {
+        // iOS-only; no-op on Android
+    }
+
+    // --- Android parity gaps: reject stubs (full implementations pending in a separate PR) ---
+
+    fun uploadAsset(filePath: String, resource: String, attribute: String, promise: Promise) {
+        promise.reject(E_UNSUPPORTED, UNSUPPORTED_MESSAGE)
+    }
+
+    fun fetchAsset(assetId: String, promise: Promise) {
+        promise.reject(E_UNSUPPORTED, UNSUPPORTED_MESSAGE)
+    }
+
+    fun requestNotificationPermission(promise: Promise) {
+        promise.reject(E_UNSUPPORTED, UNSUPPORTED_MESSAGE)
+    }
+
+    fun getNotificationPermissionStatus(promise: Promise) {
+        promise.reject(E_UNSUPPORTED, UNSUPPORTED_MESSAGE)
+    }
+
+    companion object {
+        const val NAME = "DashXReactNative"
+        private const val E_UNSPECIFIED = "EUNSPECIFIED"
+        private const val E_UNSUPPORTED = "EUNSUPPORTED"
+        private const val UNSUPPORTED_MESSAGE = "This method is not implemented on Android"
     }
 }

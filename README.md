@@ -26,7 +26,7 @@ _DashX SDK for React Native_
 
 ## Install
 
-Requires **React Native 0.71+**, **iOS 13.0+**, **Android SDK 26+**, and **Node.js 16+**.
+Requires **React Native 0.74+**, **iOS 13.0+**, **Android SDK 26+**, and **Node.js 16+**.
 
 > **Note:** This SDK uses native modules and is **not compatible with Expo Go**. Use a [development build](https://docs.expo.dev/develop/development-builds/introduction/) if you are using Expo.
 
@@ -39,6 +39,18 @@ or
 ```sh
 yarn add @dashx/react-native
 ```
+
+## New Architecture support
+
+Starting with **1.2.0**, `@dashx/react-native` is implemented as a TurboModule and supports both the **Old Architecture** and the **New Architecture** out of the box. The same package and the same JS API work on both — no code changes, no conditional imports, no flags to flip in your app code.
+
+- Consumers on `newArchEnabled=true` get direct JSI calls and compile-time type safety via codegen.
+- Consumers on `newArchEnabled=false` continue to use the legacy bridge with no changes.
+
+### Breaking changes in 1.2.0
+
+- Minimum React Native version is now **0.74.0** (previously 0.71.0).
+- The Android package class has been renamed from `DashXPackage` to `DashXReactNativePackage` (the filename was already `DashXReactNativePackage.kt`; this resolves a long-standing filename/classname mismatch). If you manually registered packages in `MainApplication`, update your import/constructor accordingly. Most apps use autolinking and will not be affected.
 
 ## Documentation
 

@@ -1,7 +1,7 @@
 {
   "name": "@dashx/react-native",
   "title": "DashX React Native",
-  "version": "1.1.5",
+  "version": "1.2.0",
   "description": "DashX SDK for React Native",
   "main": "index.js",
   "types": "index.d.ts",
@@ -22,8 +22,17 @@
     "index.js",
     "index.d.ts",
     "ios",
+    "src",
     "README.md"
   ],
+  "codegenConfig": {
+    "name": "RNDashXReactNativeSpec",
+    "type": "modules",
+    "jsSrcsDir": "src",
+    "android": {
+      "javaPackageName": "com.dashx.rn.sdk"
+    }
+  },
   "scripts": {
     "test": "jest",
     "lint": "eslint index.js"
@@ -49,7 +58,7 @@
   },
   "peerDependencies": {
     "react": ">=17.0.0",
-    "react-native": ">=0.71.0"
+    "react-native": ">=0.74.0"
   },
   "devDependencies": {
     "@commitlint/config-conventional": "^17.0.2",

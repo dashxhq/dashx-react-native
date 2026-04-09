@@ -60,8 +60,8 @@ class DashXReactNative: RCTEventEmitter {
         DashX.screen(screenName, withData: data as? [String: Any])
     }
 
-    @objc(fetchRecord:options:resolver:rejecter:)
-    func fetchRecord(_ urn: String, options: NSDictionary?, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+    @objc(fetchRecord:options:resolve:reject:)
+    func fetchRecord(_ urn: String, options: NSDictionary?, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         DashXClient.instance.fetchRecord(
             urn: urn,
             preview: options?["preview"] as? Bool,
@@ -77,8 +77,8 @@ class DashXReactNative: RCTEventEmitter {
         }
     }
 
-    @objc(searchRecords:options:resolver:rejecter:)
-    func searchRecords(_ resource: String, options: NSDictionary?, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+    @objc(searchRecords:options:resolve:reject:)
+    func searchRecords(_ resource: String, options: NSDictionary?, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         DashXClient.instance.searchRecords(
             resource: resource,
             filter: options?["filter"] as? [String: Any],
@@ -98,8 +98,8 @@ class DashXReactNative: RCTEventEmitter {
         }
     }
 
-    @objc(fetchStoredPreferences:rejecter:)
-    func fetchStoredPreferences(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+    @objc(fetchStoredPreferences:reject:)
+    func fetchStoredPreferences(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         DashXClient.instance.fetchStoredPreferences { result in
             switch result {
             case .success(let prefs): resolve(prefs)
@@ -108,8 +108,8 @@ class DashXReactNative: RCTEventEmitter {
         }
     }
 
-    @objc(saveStoredPreferences:resolver:rejecter:)
-    func saveStoredPreferences(_ preferenceData: NSDictionary, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+    @objc(saveStoredPreferences:resolve:reject:)
+    func saveStoredPreferences(_ preferenceData: NSDictionary, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         guard let dict = preferenceData as? [String: Any] else {
             reject("EINVAL", "preferenceData must be a plain object", nil)
             return
@@ -133,13 +133,13 @@ class DashXReactNative: RCTEventEmitter {
     }
 
     @objc(setLogLevel:)
-    func setLogLevel(_ level: Int) {
-        let logLevel = DashXLog.LogLevel(rawValue: level) ?? DashXLog.LogLevel.off
+    func setLogLevel(_ level: Double) {
+        let logLevel = DashXLog.LogLevel(rawValue: Int(level)) ?? DashXLog.LogLevel.off
         DashXLog.setLogLevel(to: logLevel)
     }
 
-    @objc(uploadAsset:resource:attribute:resolver:rejecter:)
-    func uploadAsset(_ filePath: String, resource: String, attribute: String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+    @objc(uploadAsset:resource:attribute:resolve:reject:)
+    func uploadAsset(_ filePath: String, resource: String, attribute: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         let fileURL = URL(fileURLWithPath: filePath)
         DashXClient.instance.uploadAsset(fileURL: fileURL, resource: resource, attribute: attribute) { result in
             switch result {
@@ -156,8 +156,8 @@ class DashXReactNative: RCTEventEmitter {
         }
     }
 
-    @objc(fetchAsset:resolver:rejecter:)
-    func fetchAsset(_ assetId: String, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+    @objc(fetchAsset:resolve:reject:)
+    func fetchAsset(_ assetId: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         DashXClient.instance.fetchAsset(assetId: assetId) { result in
             switch result {
             case .success(let assetResponse):
@@ -217,13 +217,13 @@ class DashXReactNative: RCTEventEmitter {
         DashX.trackNotificationNavigation(navigationAction, notificationId: notificationId as String?)
     }
 
-    @objc(requestNotificationPermission:rejecter:)
-    func requestNotificationPermission(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+    @objc(requestNotificationPermission:reject:)
+    func requestNotificationPermission(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         DashX.requestNotificationPermission { status in resolve(status.rawValue) }
     }
 
-    @objc(getNotificationPermissionStatus:rejecter:)
-    func getNotificationPermissionStatus(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+    @objc(getNotificationPermissionStatus:reject:)
+    func getNotificationPermissionStatus(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         DashX.getNotificationPermissionStatus { status in resolve(status.rawValue) }
     }
 }

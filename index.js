@@ -1,4 +1,5 @@
 import { NativeEventEmitter, NativeModules, Platform } from 'react-native';
+import NativeDashXReactNative from './src/NativeDashXReactNative';
 
 function getLinkingError() {
   return (
@@ -12,8 +13,10 @@ function getLinkingError() {
 let _nativeDashX = null;
 function getNativeDashX() {
   if (!_nativeDashX) {
-    _nativeDashX = NativeModules.DashXReactNative
-      ? NativeModules.DashXReactNative
+    const nativeModule =
+      NativeDashXReactNative || NativeModules.DashXReactNative;
+    _nativeDashX = nativeModule
+      ? nativeModule
       : new Proxy(
           {},
           {
