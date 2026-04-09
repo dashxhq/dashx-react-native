@@ -1,39 +1,31 @@
-<p align="center">
-    <br />
-    <a href="https://dashx.com"><img src="https://raw.githubusercontent.com/dashxhq/brand-book/master/assets/logo-black-text-color-icon@2x.png" alt="DashX" height="40" /></a>
-    <br />
-    <br />
-    <strong>Your All-in-One Product Stack</strong>
-</p>
-
 <div align="center">
-  <h4>
-    <a href="https://dashx.com">Website</a>
-    <span> | </span>
-    <a href="https://docs.dashx.com">Documentation</a>
-    <span> | </span>
-    <a href="https://docs.dashx.com/sdks/client-side/react-native-sdk">React Native SDK Docs</a>
-  </h4>
-</div>
 
-<br />
+<a href="https://dashx.com"><img src="https://raw.githubusercontent.com/dashxhq/brand-book/master/assets/logo-black-text-color-icon@2x.png" alt="DashX" height="44" /></a>
 
-# @dashx/react-native
+<p><strong>The official DashX SDK for React Native</strong><br/>
+<sub>Analytics · Content Management · Push Notifications · Deep Linking · Asset Management</sub></p>
 
-<p align="center">
+<p>
   <a href="https://www.npmjs.com/package/@dashx/react-native"><img alt="npm version" src="https://img.shields.io/npm/v/@dashx/react-native.svg?style=flat-square&color=cb3837"></a>
   <a href="https://www.npmjs.com/package/@dashx/react-native"><img alt="downloads" src="https://img.shields.io/npm/dm/@dashx/react-native.svg?style=flat-square&color=blue"></a>
   <a href="https://github.com/dashxhq/dashx-react-native/blob/main/LICENSE"><img alt="license" src="https://img.shields.io/npm/l/@dashx/react-native.svg?style=flat-square&color=green"></a>
-  <a href="#install"><img alt="platforms" src="https://img.shields.io/badge/platforms-iOS%20%7C%20Android-brightgreen.svg?style=flat-square"></a>
+  <a href="#installation"><img alt="platforms" src="https://img.shields.io/badge/platforms-iOS%20%7C%20Android-brightgreen.svg?style=flat-square"></a>
+  <img alt="react native" src="https://img.shields.io/badge/React%20Native-%E2%89%A50.74-61DAFB.svg?style=flat-square&logo=react">
   <img alt="new architecture" src="https://img.shields.io/badge/New%20Architecture-ready-8A2BE2.svg?style=flat-square">
   <img alt="turbomodule" src="https://img.shields.io/badge/TurboModule-enabled-ff69b4.svg?style=flat-square">
-  <img alt="react native" src="https://img.shields.io/badge/React%20Native-%E2%89%A50.74-61DAFB.svg?style=flat-square&logo=react">
   <img alt="typescript" src="https://img.shields.io/badge/TypeScript-ready-3178C6.svg?style=flat-square&logo=typescript">
 </p>
 
-> The official **DashX SDK for React Native**. Analytics, content management, push notifications, deep linking, and asset management — unified behind a single, strongly-typed API that works across iOS and Android, on both the legacy bridge and React Native's New Architecture.
+<p>
+  <a href="https://dashx.com">Website</a>
+  &nbsp;·&nbsp;
+  <a href="https://docs.dashx.com">Documentation</a>
+  &nbsp;·&nbsp;
+  <a href="https://docs.dashx.com/sdks/client-side/react-native-sdk">React Native SDK Docs</a>
+</p>
 
----
+</div>
+
 
 ## Table of Contents
 
@@ -58,7 +50,6 @@
 - [Contributing](#contributing)
 - [License](#license)
 
----
 
 ## Overview
 
@@ -76,12 +67,12 @@ All without writing a single line of platform-specific code in your app.
 
 ```mermaid
 graph LR
-    APP["📱 Your React Native App"] --> SDK["@dashx/react-native"]
-    SDK --> DASHX["☁️ DashX Platform"]
-    DASHX --> ANALYTICS["📊 Analytics"]
-    DASHX --> MESSAGING["🔔 Messaging"]
-    DASHX --> CMS["📝 CMS"]
-    DASHX --> ASSETS["🖼️ Assets"]
+    APP["Your React Native App"] --> SDK["@dashx/react-native"]
+    SDK --> DASHX["DashX Platform"]
+    DASHX --> ANALYTICS["Analytics<br/>track events, users, screens"]
+    DASHX --> MESSAGING["Push & Deep Links<br/>notifications, navigation"]
+    DASHX --> CMS["Content Management<br/>articles, products, pages"]
+    DASHX --> ASSETS["Asset Management<br/>upload and fetch files"]
 
     style SDK fill:#6366f1,stroke:#4338ca,color:#fff
     style DASHX fill:#0ea5e9,stroke:#0369a1,color:#fff
@@ -215,7 +206,7 @@ sequenceDiagram
     JS->>Spec: getNativeDashX().track(...)
     Spec->>Bridge: Marshal args
     Bridge->>Native: Invoke track method
-    Native->>Native: Convert ReadableMap → Kotlin HashMap<br/>(or NSDictionary → Swift Dict)
+    Native->>Native: Convert ReadableMap to Kotlin HashMap<br/>(or NSDictionary to Swift Dict)
     Native->>SDK: DashX.track(event, data)
     SDK->>Backend: HTTP POST /events
     Backend-->>SDK: 200 OK
@@ -277,7 +268,6 @@ messageSub.remove();
 linkSub.remove();
 ```
 
----
 
 ## Requirements
 
@@ -300,7 +290,6 @@ Before installing, make sure your project meets the following requirements:
 > [!NOTE]
 > From **1.2.0** the minimum supported React Native version is **0.74.0** (previously 0.71.0). TurboModule codegen matured in 0.74 — earlier versions have edge cases with `BaseReactPackage` and iOS Swift interop that are not worth supporting.
 
----
 
 ## Installation
 
@@ -399,8 +388,6 @@ npx react-native run-android
 🤖 If you use an AI coding assistant (Claude Code, Cursor, GitHub Copilot, Windsurf, Cline, Aider, etc.), hand off the entire installation to the agent. **Copy the prompt below, paste it into your agent, and it will perform every step end-to-end in your project.**
 
 The prompt is self-contained — it tells the agent what to install, where to put things, what to verify, and what to do if something fails. You only need to provide your **DashX public key** when asked.
-
-> **ℹ️ Hover over the code block below to reveal the copy button in the top-right corner.** The prompt is intentionally strict about verification steps and never-do rules so the agent won't downgrade your RN version, corrupt your lockfile, set up Firebase on your behalf, or commit secrets.
 
 #### 📋 Copy this prompt into your AI agent
 
