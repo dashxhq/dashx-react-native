@@ -285,7 +285,7 @@ Before installing, make sure your project meets the following requirements:
 | **Kotlin** | 1.8 | 1.9+ |
 
 > [!WARNING]
-> This SDK is **not compatible with Expo Go** because it uses native modules. If you use Expo, you must use a [development build](https://docs.expo.dev/develop/development-builds/introduction/).
+> **Expo Go is not supported** because this SDK has native modules that need to be compiled into the app binary. **Regular Expo projects are fine** as long as you use a [development build](https://docs.expo.dev/develop/development-builds/introduction/) instead of the Expo Go app. If you're already running `npx expo run:ios` / `npx expo run:android` (or have `ios/` and `android/` folders at the project root), you're on a development build and this SDK works out of the box.
 
 > [!NOTE]
 > From **1.2.0** the minimum supported React Native version is **0.74.0** (previously 0.71.0). TurboModule codegen matured in 0.74 — earlier versions have edge cases with `BaseReactPackage` and iOS Swift interop that are not worth supporting.
@@ -390,24 +390,6 @@ npx react-native run-android
 The prompt is self-contained — it tells the agent what to install, where to put things, what to verify, and what to do if something fails. You only need to provide your **DashX public key** when asked.
 
 #### 📋 Copy this prompt into your AI agent
-
-Here's a preview of the first few lines — expand the section below to see the full prompt and copy it.
-
-```text
-You are installing and integrating `@dashx/react-native` (v1.2.0+) into this React Native project. Perform every step below in order. Do not skip verification steps. If any step fails, report the error clearly and wait for my decision before continuing.
-
-================================================================
-CONTEXT
-================================================================
-
-`@dashx/react-native` is the official DashX SDK for React Native. It's a TurboModule that works on both React Native's Old Architecture and New Architecture from a single install. It provides analytics, content management, push notifications, deep linking, and asset management — all backed by native iOS and Android SDKs.
-
-- npm package: @dashx/react-native
-- Minimum React Native: 0.74.0
-- Minimum iOS deployment target: 13.0
-
-... (click to expand for the full prompt)
-```
 
 <details>
 <summary><strong>📖 Click to expand the full AI agent prompt (hover the expanded code block to reveal the copy button)</strong></summary>
