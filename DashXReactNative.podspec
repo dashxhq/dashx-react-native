@@ -42,8 +42,8 @@ Pod::Spec.new do |s|
 
   s.dependency "React-RCTAppDelegate"
   # DashX iOS SDK — consumers must provide the source in their Podfile:
-  #   pod 'DashX', :git => 'https://github.com/dashxhq/dashx-ios.git', :tag => '1.1.5'
+  #   pod 'DashX', :git => 'https://github.com/dashxhq/dashx-ios.git', :tag => '1.1.9'
   # For local development:
   #   pod 'DashX', :path => '../dashx-ios'
-  s.dependency "DashX", "~> 1.1.5"
+  s.dependency "DashX", "~> 1.1.9"
 end

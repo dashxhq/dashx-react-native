@@ -177,6 +177,31 @@ const DashX = {
     return getNativeDashX().enableAdTracking();
   },
 
+  processURL(url, options = {}) {
+    if (Platform.OS !== 'ios') return;
+    if (!url || typeof url !== 'string') {
+      throw new Error('DashX.processURL: url is required and must be a string');
+    }
+    return getNativeDashX().processURL(
+      url,
+      options.source || null,
+      options.forwardToLinkHandler !== false
+    );
+  },
+
+  trackNotificationNavigation(action, notificationId) {
+    if (Platform.OS !== 'ios') return;
+    if (action != null && typeof action !== 'object') {
+      throw new Error(
+        'DashX.trackNotificationNavigation: action must be an object or null'
+      );
+    }
+    return getNativeDashX().trackNotificationNavigation(
+      action || null,
+      notificationId || null
+    );
+  },
+
   requestNotificationPermission() {
     return getNativeDashX().requestNotificationPermission();
   },

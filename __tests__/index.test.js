@@ -16,6 +16,8 @@ const mockNativeModule = {
   fetchAsset: jest.fn(),
   enableLifecycleTracking: jest.fn(),
   enableAdTracking: jest.fn(),
+  processURL: jest.fn(),
+  trackNotificationNavigation: jest.fn(),
   requestNotificationPermission: jest.fn(),
   getNotificationPermissionStatus: jest.fn(),
   addListener: jest.fn(),
@@ -32,6 +34,7 @@ jest.mock('react-native', () => ({
     addListener: mockAddListener,
   })),
   Platform: {
+    OS: 'ios',
     select: jest.fn((obj) => obj.default || ''),
   },
 }));
@@ -322,6 +325,133 @@ describe('fetchAsset', () => {
 
   it('throws if assetId is missing', () => {
     expect(() => DashX.fetchAsset(null)).toThrow('assetId must be a string');
+  });
+});
+
+// --- processURL ---
+
+describe('processURL', () => {
+  it('calls native processURL with defaults', () => {
+    DashX.processURL('https://example.com/path');
+    expect(mockNativeModule.processURL).toHaveBeenCalledWith(
+      'https://example.com/path',
+      null,
+      true
+    );
+  });
+
+  it('passes source option', () => {
+    DashX.processURL('https://example.com', { source: 'universal_link' });
+    expect(mockNativeModule.processURL).toHaveBeenCalledWith(
+      'https://example.com',
+      'universal_link',
+      true
+    );
+  });
+
+  it('passes forwardToLinkHandler as false', () => {
+    DashX.processURL('https://example.com', { forwardToLinkHandler: false });
+    expect(mockNativeModule.processURL).toHaveBeenCalledWith(
+      'https://example.com',
+      null,
+      false
+    );
+  });
+
+  it('throws if url is missing', () => {
+    expect(() => DashX.processURL(null)).toThrow('url is required');
+  });
+
+  it('throws if url is not a string', () => {
+    expect(() => DashX.processURL(123)).toThrow(
+      'url is required and must be a string'
+    );
+  });
+
+  it('no-ops on Android', () => {
+    const { Platform } = require('react-native');
+    Platform.OS = 'android';
+    DashX.processURL('https://example.com');
+    expect(mockNativeModule.processURL).not.toHaveBeenCalled();
+    Platform.OS = 'ios';
+  });
+});
+
+// --- trackNotificationNavigation ---
+
+describe('trackNotificationNavigation', () => {
+  it('calls native with deepLink action', () => {
+    DashX.trackNotificationNavigation(
+      { type: 'deepLink', url: 'https://example.com' },
+      'notif-1'
+    );
+    expect(mockNativeModule.trackNotificationNavigation).toHaveBeenCalledWith(
+      { type: 'deepLink', url: 'https://example.com' },
+      'notif-1'
+    );
+  });
+
+  it('calls native with screen action', () => {
+    DashX.trackNotificationNavigation(
+      { type: 'screen', name: 'Home', data: { ref: 'banner' } },
+      'notif-2'
+    );
+    expect(mockNativeModule.trackNotificationNavigation).toHaveBeenCalledWith(
+      { type: 'screen', name: 'Home', data: { ref: 'banner' } },
+      'notif-2'
+    );
+  });
+
+  it('calls native with richLanding action', () => {
+    DashX.trackNotificationNavigation(
+      { type: 'richLanding', url: 'https://promo.example.com' },
+      'notif-3'
+    );
+    expect(mockNativeModule.trackNotificationNavigation).toHaveBeenCalledWith(
+      { type: 'richLanding', url: 'https://promo.example.com' },
+      'notif-3'
+    );
+  });
+
+  it('calls native with clickAction action', () => {
+    DashX.trackNotificationNavigation(
+      { type: 'clickAction', action: 'OPEN_SETTINGS' },
+      'notif-4'
+    );
+    expect(mockNativeModule.trackNotificationNavigation).toHaveBeenCalledWith(
+      { type: 'clickAction', action: 'OPEN_SETTINGS' },
+      'notif-4'
+    );
+  });
+
+  it('calls native with null action when omitted', () => {
+    DashX.trackNotificationNavigation(null, 'notif-5');
+    expect(mockNativeModule.trackNotificationNavigation).toHaveBeenCalledWith(
+      null,
+      'notif-5'
+    );
+  });
+
+  it('calls native with null for both when both omitted', () => {
+    DashX.trackNotificationNavigation();
+    expect(mockNativeModule.trackNotificationNavigation).toHaveBeenCalledWith(
+      null,
+      null
+    );
+  });
+
+  it('throws if action is not an object', () => {
+    expect(() => DashX.trackNotificationNavigation('bad')).toThrow(
+      'action must be an object or null'
+    );
+  });
+
+  it('no-ops on Android', () => {
+    const { Platform } = require('react-native');
+    Platform.OS = 'android';
+    DashX.trackNotificationNavigation({ type: 'deepLink', url: 'https://example.com' });
+    expect(mockNativeModule.trackNotificationNavigation).not.toHaveBeenCalled();
+    Platform.OS = 'ios';
   });
 });
 

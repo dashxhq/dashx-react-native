@@ -66,6 +66,17 @@ export interface NotificationMessage {
   [key: string]: unknown;
 }
 
+export type NavigationAction =
+  | { type: 'deepLink'; url: string }
+  | { type: 'screen'; name: string; data?: Record<string, string> }
+  | { type: 'richLanding'; url: string }
+  | { type: 'clickAction'; action: string };
+
+export interface ProcessURLOptions {
+  source?: string;
+  forwardToLinkHandler?: boolean;
+}
+
 export interface DashXInstance {
   /**
    * Initialize the SDK with your public key and optional configuration.
@@ -175,6 +186,24 @@ export interface DashXInstance {
    * Enable IDFA/ATT ad tracking and request the App Tracking Transparency permission (iOS only).
    */
   enableAdTracking(): void;
+
+  /**
+   * Track a deep link open event and optionally forward the URL to the link handler (iOS only).
+   * @param url The deep link URL string.
+   * @param options.source Optional attribution source (e.g. "universal_link", "notification").
+   * @param options.forwardToLinkHandler Whether to forward to the link handler callback (default: true).
+   */
+  processURL(url: string, options?: ProcessURLOptions): void;
+
+  /**
+   * Track a notification navigation event when the user taps a notification (iOS only).
+   * @param action The navigation action taken, or null/undefined for default.
+   * @param notificationId Optional notification ID to associate with the event.
+   */
+  trackNotificationNavigation(
+    action?: NavigationAction | null,
+    notificationId?: string
+  ): void;
 
   /**
    * Request push notification permission from the user.

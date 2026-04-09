@@ -42,5 +42,5 @@ buck-out/
 \.buckd/
 *.keystore
 
-# VS Code
-.vscode/
+# Cursor plans
+.cursor

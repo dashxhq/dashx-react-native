@@ -183,6 +183,40 @@ class DashXReactNative: RCTEventEmitter {
         DashX.enableAdTracking()
     }
 
+    @objc(processURL:source:forwardToLinkHandler:)
+    func processURL(_ url: String, source: NSString?, forwardToLinkHandler: Bool) {
+        guard let parsedURL = URL(string: url) else { return }
+        DashX.processURL(parsedURL, source: source as String?, forwardToLinkHandler: forwardToLinkHandler)
+    }
+
+    @objc(trackNotificationNavigation:notificationId:)
+    func trackNotificationNavigation(_ action: NSDictionary?, notificationId: NSString?) {
+        var navigationAction: NavigationAction? = nil
+        if let action = action, let type = action["type"] as? String {
+            switch type {
+            case "deepLink":
+                if let urlString = action["url"] as? String, let url = URL(string: urlString) {
+                    navigationAction = .deepLink(url: url)
+                }
+            case "screen":
+                if let name = action["name"] as? String {
+                    navigationAction = .screen(name: name, data: action["data"] as? [String: String])
+                }
+            case "richLanding":
+                if let urlString = action["url"] as? String, let url = URL(string: urlString) {
+                    navigationAction = .richLanding(url: url)
+                }
+            case "clickAction":
+                if let actionStr = action["action"] as? String {
+                    navigationAction = .clickAction(action: actionStr)
+                }
+            default:
+                break
+            }
+        }
+        DashX.trackNotificationNavigation(navigationAction, notificationId: notificationId as String?)
+    }
+
     @objc(requestNotificationPermission:rejecter:)
     func requestNotificationPermission(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
         DashX.requestNotificationPermission { status in resolve(status.rawValue) }

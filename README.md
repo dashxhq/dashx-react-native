@@ -86,7 +86,7 @@ use_modular_headers!
 target 'YourApp' do
   # ... other pods
 
-  pod 'DashX', :git => 'https://github.com/dashxhq/dashx-ios.git', :tag => '1.1.4'
+  pod 'DashX', :git => 'https://github.com/dashxhq/dashx-ios.git', :tag => '1.1.9'
   pod 'FirebaseCore'
   pod 'FirebaseMessaging'
 
