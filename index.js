@@ -63,12 +63,7 @@ const DashX = {
         'DashX.setIdentity: uid is required and must be a string'
       );
     }
-    if (!token || typeof token !== 'string') {
-      throw new Error(
-        'DashX.setIdentity: token is required and must be a string'
-      );
-    }
-    return getNativeDashX().setIdentity(uid, token);
+    return getNativeDashX().setIdentity(uid, token || null);
   },
 
   reset() {

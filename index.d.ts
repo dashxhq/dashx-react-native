@@ -92,7 +92,7 @@ export interface DashXInstance {
   /**
    * Set user identity using a UID and authentication token.
    */
-  setIdentity(uid: string, token: string): void;
+  setIdentity(uid: string, token?: string | null): void;
 
   /**
    * Clear the current user identity and reset SDK state.
