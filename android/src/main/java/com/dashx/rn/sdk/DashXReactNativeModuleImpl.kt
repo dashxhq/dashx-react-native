@@ -1,10 +1,21 @@
 package com.dashx.rn.sdk
 
+import android.Manifest
+import android.app.Activity
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.dashx.rn.sdk.util.*
 import com.dashx.android.DashX
 import com.dashx.android.DashXLog
 import com.dashx.android.DashXLog.LogLevel
 import com.facebook.react.bridge.*
+import com.facebook.react.modules.core.PermissionAwareActivity
+import com.facebook.react.modules.core.PermissionListener
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -27,12 +38,35 @@ class DashXReactNativeModuleImpl(private val reactContext: ReactApplicationConte
     }
 
     fun configure(options: ReadableMap) {
+        createDefaultNotificationChannel()
         DashX.configure(
             reactContext,
             options.getString("publicKey")!!,
             options.getStringIfPresent("baseURI"),
             options.getStringIfPresent("targetEnvironment")
         )
+    }
+
+    private fun createDefaultNotificationChannel() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+        val notificationManager = reactContext.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager ?: return
+
+        val existing = notificationManager.getNotificationChannel(DEFAULT_CHANNEL_ID)
+        if (existing != null && existing.importance >= NotificationManager.IMPORTANCE_HIGH) return
+        if (existing != null) {
+            notificationManager.deleteNotificationChannel(DEFAULT_CHANNEL_ID)
+        }
+
+        val channel = NotificationChannel(
+            DEFAULT_CHANNEL_ID,
+            DEFAULT_CHANNEL_NAME,
+            NotificationManager.IMPORTANCE_HIGH
+        ).apply {
+            enableVibration(true)
+            setShowBadge(true)
+            lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
+        }
+        notificationManager.createNotificationChannel(channel)
     }
 
     fun identify(options: ReadableMap?) {
@@ -239,11 +273,50 @@ class DashXReactNativeModuleImpl(private val reactContext: ReactApplicationConte
     }
 
     fun requestNotificationPermission(promise: Promise) {
-        promise.reject(E_UNSUPPORTED, UNSUPPORTED_MESSAGE)
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            promise.resolve(PERMISSION_AUTHORIZED)
+            return
+        }
+
+        val alreadyGranted = ContextCompat.checkSelfPermission(
+            reactContext,
+            Manifest.permission.POST_NOTIFICATIONS
+        ) == PackageManager.PERMISSION_GRANTED
+        if (alreadyGranted) {
+            promise.resolve(PERMISSION_AUTHORIZED)
+            return
+        }
+
+        val activity = reactContext.currentActivity as? PermissionAwareActivity
+        if (activity == null) {
+            promise.reject(E_UNSPECIFIED, "No current activity to request permission from")
+            return
+        }
+
+        val listener = PermissionListener { requestCode, _, grantResults ->
+            if (requestCode != NOTIFICATION_PERMISSION_REQUEST_CODE) return@PermissionListener false
+            val granted = grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
+            promise.resolve(if (granted) PERMISSION_AUTHORIZED else PERMISSION_DENIED)
+            true
+        }
+
+        activity.requestPermissions(
+            arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+            NOTIFICATION_PERMISSION_REQUEST_CODE,
+            listener
+        )
     }
 
     fun getNotificationPermissionStatus(promise: Promise) {
-        promise.reject(E_UNSUPPORTED, UNSUPPORTED_MESSAGE)
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            promise.resolve(PERMISSION_AUTHORIZED)
+            return
+        }
+        val granted = ContextCompat.checkSelfPermission(
+            reactContext,
+            Manifest.permission.POST_NOTIFICATIONS
+        ) == PackageManager.PERMISSION_GRANTED
+        promise.resolve(if (granted) PERMISSION_AUTHORIZED else PERMISSION_NOT_DETERMINED)
     }
 
     companion object {
@@ -251,5 +324,15 @@ class DashXReactNativeModuleImpl(private val reactContext: ReactApplicationConte
         private const val E_UNSPECIFIED = "EUNSPECIFIED"
         private const val E_UNSUPPORTED = "EUNSUPPORTED"
         private const val UNSUPPORTED_MESSAGE = "This method is not implemented on Android"
+
+        private const val DEFAULT_CHANNEL_ID = "default_dashx_notification_channel"
+        private const val DEFAULT_CHANNEL_NAME = "Notifications"
+
+        private const val NOTIFICATION_PERMISSION_REQUEST_CODE = 3571
+
+        // Mirrors iOS UNAuthorizationStatus values used by the JS layer.
+        private const val PERMISSION_NOT_DETERMINED = 0
+        private const val PERMISSION_DENIED = 1
+        private const val PERMISSION_AUTHORIZED = 2
     }
 }

@@ -45,6 +45,8 @@
 - [Cross-Platform Feature Matrix](#cross-platform-feature-matrix)
 - [TypeScript Support](#typescript-support)
 - [Deep Linking & Push Navigation](#deep-linking--push-navigation)
+- [iOS: Handle notifications from a custom AppDelegate (e.g. Expo)](#ios-handle-notifications-from-a-custom-appdelegate-eg-expo)
+- [Android: Notification channels](#android-notification-channels)
 - [Troubleshooting](#troubleshooting)
 - [Versioning & Breaking Changes](#versioning--breaking-changes)
 - [Contributing](#contributing)
@@ -799,9 +801,9 @@ The SDK exposes **21 methods** plus **2 event listeners**, grouped by concern.
 | `subscribe`, `unsubscribe` | ✅ | ✅ | Full parity |
 | `setLogLevel` | ✅ | ✅ | Full parity |
 | `onMessageReceived`, `onLinkReceived` | ✅ | ✅ | Full parity |
+| `requestNotificationPermission` | ✅ | ✅ | Android uses `POST_NOTIFICATIONS` (API 33+); auto-granted on older OS |
+| `getNotificationPermissionStatus` | ✅ | ✅ | Returns iOS-compatible status codes on both platforms |
 | `uploadAsset`, `fetchAsset` | ✅ | ⏳ | Android stub (`EUNSUPPORTED`); full impl in a future release |
-| `requestNotificationPermission` | ✅ | ⏳ | Android stub (`EUNSUPPORTED`); full impl in a future release |
-| `getNotificationPermissionStatus` | ✅ | ⏳ | Android stub (`EUNSUPPORTED`); full impl in a future release |
 | `enableLifecycleTracking` | ✅ | ➖ | iOS-only, no-op on Android |
 | `enableAdTracking` (ATT) | ✅ | ➖ | iOS-only, no-op on Android |
 | `processURL` | ✅ | ➖ | iOS-only, no-op on Android |
@@ -861,6 +863,147 @@ See the [Deep Linking & Push Navigation guide](https://docs.dashx.com/apps/messa
 
 ---
 
+## iOS: Handle notifications from a custom AppDelegate (e.g. Expo)
+
+Apps with a **custom `AppDelegate`** — most notably **Expo apps**, which extend `ExpoAppDelegate` — need to forward remote notifications to `DashXNotificationHandler` so silent pushes are parsed, displayed as local notifications, and tracked.
+
+The helper is a static `@objc` class bundled with the SDK. Expose it to Swift via your app's bridging header, then call it from your `AppDelegate`.
+
+#### 1. Expose the helper through your bridging header
+
+Add the forward declaration to your app's `*-Bridging-Header.h` (Expo projects already have one; create one if your project doesn't):
+
+```objc
+#import <UIKit/UIKit.h>
+#import <UserNotifications/UserNotifications.h>
+
+@interface DashXNotificationHandler : NSObject
++ (void)handleRemoteNotificationWithUserInfo:(NSDictionary * _Nonnull)userInfo
+                           completionHandler:(void (^ _Nonnull)(UIBackgroundFetchResult))completionHandler
+    NS_SWIFT_NAME(handleRemoteNotification(userInfo:completionHandler:));
++ (void)handleNotificationResponse:(UNNotificationResponse * _Nonnull)response
+    NS_SWIFT_NAME(handleNotificationResponse(_:));
+@end
+```
+
+#### 2. Call it from your AppDelegate
+
+```swift
+import FirebaseCore
+import FirebaseMessaging
+
+@UIApplicationMain
+public class AppDelegate: ExpoAppDelegate, UNUserNotificationCenterDelegate, MessagingDelegate {
+
+  public override func application(
+    _ application: UIApplication,
+    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
+  ) -> Bool {
+    FirebaseApp.configure()
+    Messaging.messaging().delegate = self
+    UNUserNotificationCenter.current().delegate = self
+
+    UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, _ in
+      if granted {
+        DispatchQueue.main.async { application.registerForRemoteNotifications() }
+      }
+    }
+    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+
+  public override func application(
+    _ application: UIApplication,
+    didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
+  ) {
+    Messaging.messaging().apnsToken = deviceToken
+  }
+
+  public func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
+    guard let token = fcmToken else { return }
+    DashX.setFCMToken(to: token)
+  }
+
+  public override func application(
+    _ application: UIApplication,
+    didReceiveRemoteNotification userInfo: [AnyHashable: Any],
+    fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void
+  ) {
+    Messaging.messaging().appDidReceiveMessage(userInfo)
+    DashXNotificationHandler.handleRemoteNotification(userInfo: userInfo, completionHandler: completionHandler)
+  }
+
+  public func userNotificationCenter(
+    _ center: UNUserNotificationCenter,
+    willPresent notification: UNNotification,
+    withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+  ) {
+    completionHandler([.banner, .sound, .badge])
+  }
+
+  public func userNotificationCenter(
+    _ center: UNUserNotificationCenter,
+    didReceive response: UNNotificationResponse,
+    withCompletionHandler completionHandler: @escaping () -> Void
+  ) {
+    DashXNotificationHandler.handleNotificationResponse(response)
+    completionHandler()
+  }
+}
+```
+
+#### 3. Set `FirebaseAppDelegateProxyEnabled = NO` in your `Info.plist`
+
+This tells Firebase not to swizzle the remote-notification methods so your AppDelegate gets the raw payloads.
+
+```xml
+<key>FirebaseAppDelegateProxyEnabled</key>
+<false/>
+```
+
+#### What the helper does
+
+- **Parses `dashx` payload** from the silent push (JSON string or dict).
+- **Creates a local `UNNotificationRequest`** with title, body, sound, category, and action buttons from the payload so the system shows a banner even when the push is delivered as data-only.
+- **Forwards the payload** to the JS `onMessageReceived` event emitter so your app can react in React Native.
+- **Tracks delivery and clicks** via `DashX.trackMessage(...)`.
+
+If the payload isn't a DashX notification (no `dashx` key), the helper calls `completionHandler(.noData)` and exits cleanly — your own handler code can still process non-DashX pushes around it.
+
+---
+
+## Android: Notification channels
+
+Android requires every notification to be posted to a channel, and the channel's **importance** — not the notification's priority — decides whether the user sees a heads-up banner.
+
+`DashX.configure()` automatically creates a default channel (`default_dashx_notification_channel`) with `IMPORTANCE_HIGH`, so heads-up banners work out of the box without any extra setup. For apps that need multiple channels (e.g., separate sounds, vibration patterns, or importance levels per notification type), create your own channels and target them from the server.
+
+**Custom channels** — create a channel in `Application.onCreate()` and have your backend send `channel_id` in the DashX payload:
+
+```kotlin
+class MyApplication : Application() {
+  override fun onCreate() {
+    super.onCreate()
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+      val channel = NotificationChannel(
+        "app_notifications",
+        "App Notifications",
+        NotificationManager.IMPORTANCE_HIGH
+      ).apply {
+        enableVibration(true)
+        lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+      }
+      manager.createNotificationChannel(channel)
+    }
+  }
+}
+```
+
+When the DashX payload contains a `channel_id`, the SDK posts to that channel instead of its default. The channel must already exist on the device at the time the notification arrives.
+
+---
+
 ## Troubleshooting
 
 <details>
@@ -876,11 +1019,9 @@ This error comes from the fallback `Proxy` in `index.js` and means the native mo
 </details>
 
 <details>
-<summary><strong>🔴 "Method xxx not found on DashXReactNative" (Android)</strong></summary>
+<summary><strong>🔴 "EUNSUPPORTED" error on Android for `uploadAsset` / `fetchAsset`</strong></summary>
 
-From **1.2.0** onwards, the 4 Android parity-gap methods (`uploadAsset`, `fetchAsset`, `requestNotificationPermission`, `getNotificationPermissionStatus`) now reject with the code `EUNSUPPORTED` instead of throwing `Method not found`. If you see the old error, you're on a pre-1.2.0 version — upgrade.
-
-If you need these methods on Android today, wrap the call and handle the rejection:
+The asset methods are not yet available on Android and reject with the code `EUNSUPPORTED`. Wrap the call and handle the rejection:
 
 ```ts
 try {
@@ -951,7 +1092,15 @@ For more troubleshooting tips, see the [Testing & Debugging guide](./.qoder/repo
 
 ## Versioning & Breaking Changes
 
-This SDK follows **semantic versioning**. Breaking changes are only introduced in major versions (e.g., 1.x → 2.x), with the one exception of the **1.2.0** release which is a minor bump containing a narrow but intentional breaking change:
+This SDK follows **semantic versioning**. Breaking changes are only introduced in major versions (e.g., 1.x → 2.x), with two exceptions — **1.2.0** (TurboModule migration) and **1.2.1** (Expo compatibility) — which ship narrow but intentional breaking changes in a minor bump.
+
+### 1.2.1 — Expo compatibility & Android parity
+
+- 🆕 **iOS:** New `DashXNotificationHandler` static class exposing `handleRemoteNotification(userInfo:completionHandler:)` and `handleNotificationResponse(_:)`. Drop it into any `AppDelegate` — including `ExpoAppDelegate` — to handle silent pushes, render local notifications, and track delivery/clicks. See the [iOS: Handle notifications from a custom AppDelegate](#ios-handle-notifications-from-a-custom-appdelegate-eg-expo) section.
+- 🆕 **Android:** `requestNotificationPermission()` and `getNotificationPermissionStatus()` are now fully supported natively. Return values mirror iOS's `UNAuthorizationStatus` (`0 = notDetermined`, `1 = denied`, `2 = authorized`). The SDK also bundles the `POST_NOTIFICATIONS` permission in its own manifest — no extra declaration needed in your app.
+- 🆕 **Android:** `DashX.configure()` auto-creates a default notification channel at `IMPORTANCE_HIGH` so heads-up banners work out of the box.
+- 🆕 **API:** `setIdentity(uid, token?)` — the `token` parameter is now optional (`setIdentity(uid: string, token?: string | null): void`), matching the native iOS/Android SDKs.
+- 🔥 **Breaking (iOS):** `DashXRCTAppDelegate` has been removed. If you were extending it, migrate to `DashXNotificationHandler` (see the guide above). The podspec no longer depends on `React-RCTAppDelegate`.
 
 ### 1.2.0 — TurboModule Migration
 
