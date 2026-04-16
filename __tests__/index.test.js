@@ -37,6 +37,15 @@ jest.mock('react-native', () => ({
     OS: 'ios',
     select: jest.fn((obj) => obj.default || ''),
   },
+  TurboModuleRegistry: {
+    get: jest.fn(() => mockNativeModule),
+    getEnforcing: jest.fn(() => mockNativeModule),
+  },
+}));
+
+jest.mock('../src/NativeDashXReactNative', () => ({
+  __esModule: true,
+  default: mockNativeModule,
 }));
 
 const DashX = require('../index').default;

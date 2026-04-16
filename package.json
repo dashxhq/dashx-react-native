@@ -22,8 +22,17 @@
     "index.js",
     "index.d.ts",
     "ios",
+    "src",
     "README.md"
   ],
+  "codegenConfig": {
+    "name": "RNDashXReactNativeSpec",
+    "type": "modules",
+    "jsSrcsDir": "src",
+    "android": {
+      "javaPackageName": "com.dashx.rn.sdk"
+    }
+  },
   "scripts": {
     "test": "jest",
     "lint": "eslint index.js"
@@ -49,7 +58,7 @@
   },
   "peerDependencies": {
     "react": ">=17.0.0",
-    "react-native": ">=0.71.0"
+    "react-native": ">=0.74.0"
   },
   "devDependencies": {
     "@commitlint/config-conventional": "^17.0.2",

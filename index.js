@@ -1,4 +1,5 @@
 import { NativeEventEmitter, NativeModules, Platform } from 'react-native';
+import NativeDashXReactNative from './src/NativeDashXReactNative';
 
 function getLinkingError() {
   return (
@@ -12,8 +13,10 @@ function getLinkingError() {
 let _nativeDashX = null;
 function getNativeDashX() {
   if (!_nativeDashX) {
-    _nativeDashX = NativeModules.DashXReactNative
-      ? NativeModules.DashXReactNative
+    const nativeModule =
+      NativeDashXReactNative || NativeModules.DashXReactNative;
+    _nativeDashX = nativeModule
+      ? nativeModule
       : new Proxy(
           {},
           {
@@ -60,12 +63,7 @@ const DashX = {
         'DashX.setIdentity: uid is required and must be a string'
       );
     }
-    if (!token || typeof token !== 'string') {
-      throw new Error(
-        'DashX.setIdentity: token is required and must be a string'
-      );
-    }
-    return getNativeDashX().setIdentity(uid, token);
+    return getNativeDashX().setIdentity(uid, token || null);
   },
 
   reset() {

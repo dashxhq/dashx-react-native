@@ -44,3 +44,6 @@ buck-out/
 
 # Cursor plans
 .cursor
+.claude
+.qoder
+/plan

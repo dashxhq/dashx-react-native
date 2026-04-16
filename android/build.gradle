@@ -3,6 +3,14 @@ import groovy.json.JsonSlurper
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
+def isNewArchitectureEnabled() {
+    return project.hasProperty("newArchEnabled") && project.newArchEnabled == "true"
+}
+
+if (isNewArchitectureEnabled()) {
+    apply plugin: 'com.facebook.react'
+}
+
 def getVersionFromNpm() {
     def inputFile = new File("../package.json")
     def packageJson = new JsonSlurper().parseText(inputFile.text)
@@ -30,6 +38,16 @@ android {
         abortOnError false
     }
 
+    sourceSets {
+        main {
+            if (isNewArchitectureEnabled()) {
+                java.srcDirs += ['src/newarch/java']
+            } else {
+                java.srcDirs += ['src/oldarch/java']
+            }
+        }
+    }
+
     packaging {
         pickFirst 'lib/arm64-v8a/libc++_shared.so'
         pickFirst 'lib/arm64-v8a/libfbjni.so'
@@ -40,6 +58,14 @@ android {
         pickFirst 'lib/x86_64/libc++_shared.so'
         pickFirst 'lib/x86_64/libfbjni.so'
    }
+}
+
+if (isNewArchitectureEnabled()) {
+    react {
+        jsRootDir = file("../src/")
+        libraryName = "RNDashXReactNativeSpec"
+        codegenJavaPackageName = "com.dashx.rn.sdk"
+    }
 }
 
 repositories {
