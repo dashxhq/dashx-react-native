@@ -13,6 +13,7 @@ import com.dashx.rn.sdk.util.*
 import com.dashx.android.DashX
 import com.dashx.android.DashXLog
 import com.dashx.android.DashXLog.LogLevel
+import com.dashx.android.data.Asset
 import com.facebook.react.bridge.*
 import com.facebook.react.modules.core.PermissionAwareActivity
 import com.facebook.react.modules.core.PermissionListener
@@ -33,7 +34,14 @@ class DashXReactNativeModuleImpl(private val reactContext: ReactApplicationConte
     }
 
     fun setLogLevel(level: Double) {
-        val logLevel = LogLevel.values().firstOrNull { it.code == level.toInt() } ?: LogLevel.OFF
+        // JS contract: 0 = off, 1 = errors, 2 = debug
+        // Native SDK:  OFF = -1, ERROR = 0, INFO = 1, DEBUG = 2
+        val logLevel = when (level.toInt()) {
+            0 -> LogLevel.OFF
+            1 -> LogLevel.ERROR
+            2 -> LogLevel.DEBUG
+            else -> LogLevel.OFF
+        }
         DashXLog.setLogLevel(logLevel)
     }
 
@@ -52,10 +60,7 @@ class DashXReactNativeModuleImpl(private val reactContext: ReactApplicationConte
         val notificationManager = reactContext.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager ?: return
 
         val existing = notificationManager.getNotificationChannel(DEFAULT_CHANNEL_ID)
-        if (existing != null && existing.importance >= NotificationManager.IMPORTANCE_HIGH) return
-        if (existing != null) {
-            notificationManager.deleteNotificationChannel(DEFAULT_CHANNEL_ID)
-        }
+        if (existing != null) return
 
         val channel = NotificationChannel(
             DEFAULT_CHANNEL_ID,
@@ -91,8 +96,8 @@ class DashXReactNativeModuleImpl(private val reactContext: ReactApplicationConte
                 ?.mapValues { it.value.toString() }
                 ?.let { HashMap(it) }
         } catch (e: Exception) {
-            DashXLog.d(tag, e.message)
-            return
+            DashXLog.d(tag, "Failed to convert track data, sending event without data: ${e.message}")
+            null
         }
 
         DashX.track(event, jsonData)
@@ -262,14 +267,43 @@ class DashXReactNativeModuleImpl(private val reactContext: ReactApplicationConte
         // iOS-only; no-op on Android
     }
 
-    // --- Android parity gaps: reject stubs (full implementations pending in a separate PR) ---
-
     fun uploadAsset(filePath: String, resource: String, attribute: String, promise: Promise) {
-        promise.reject(E_UNSUPPORTED, UNSUPPORTED_MESSAGE)
+        val file = java.io.File(filePath)
+        DashX.uploadAsset(
+            file = file,
+            resource = resource,
+            attribute = attribute,
+            onSuccess = { asset ->
+                try {
+                    val jsonString = Json.encodeToString(asset)
+                    val jsonObject = org.json.JSONObject(jsonString)
+                    promise.resolve(convertJsonToMap(jsonObject))
+                } catch (e: Exception) {
+                    promise.resolve(null)
+                }
+            },
+            onError = {
+                promise.reject(E_UNSPECIFIED, it.message)
+            }
+        )
     }
 
     fun fetchAsset(assetId: String, promise: Promise) {
-        promise.reject(E_UNSUPPORTED, UNSUPPORTED_MESSAGE)
+        DashX.fetchAsset(
+            assetId = assetId,
+            onSuccess = { asset ->
+                try {
+                    val jsonString = Json.encodeToString(asset)
+                    val jsonObject = org.json.JSONObject(jsonString)
+                    promise.resolve(convertJsonToMap(jsonObject))
+                } catch (e: Exception) {
+                    promise.resolve(null)
+                }
+            },
+            onError = {
+                promise.reject(E_UNSPECIFIED, it.message)
+            }
+        )
     }
 
     fun requestNotificationPermission(promise: Promise) {
@@ -292,6 +326,11 @@ class DashXReactNativeModuleImpl(private val reactContext: ReactApplicationConte
             promise.reject(E_UNSPECIFIED, "No current activity to request permission from")
             return
         }
+
+        reactContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean(KEY_PERMISSION_REQUESTED, true)
+            .apply()
 
         val listener = PermissionListener { requestCode, _, grantResults ->
             if (requestCode != NOTIFICATION_PERMISSION_REQUEST_CODE) return@PermissionListener false
@@ -316,19 +355,26 @@ class DashXReactNativeModuleImpl(private val reactContext: ReactApplicationConte
             reactContext,
             Manifest.permission.POST_NOTIFICATIONS
         ) == PackageManager.PERMISSION_GRANTED
-        promise.resolve(if (granted) PERMISSION_AUTHORIZED else PERMISSION_NOT_DETERMINED)
+        if (granted) {
+            promise.resolve(PERMISSION_AUTHORIZED)
+        } else {
+            val wasRequested = reactContext
+                .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .getBoolean(KEY_PERMISSION_REQUESTED, false)
+            promise.resolve(if (wasRequested) PERMISSION_DENIED else PERMISSION_NOT_DETERMINED)
+        }
     }
 
     companion object {
         const val NAME = "DashXReactNative"
         private const val E_UNSPECIFIED = "EUNSPECIFIED"
-        private const val E_UNSUPPORTED = "EUNSUPPORTED"
-        private const val UNSUPPORTED_MESSAGE = "This method is not implemented on Android"
-
         private const val DEFAULT_CHANNEL_ID = "default_dashx_notification_channel"
         private const val DEFAULT_CHANNEL_NAME = "Notifications"
 
         private const val NOTIFICATION_PERMISSION_REQUEST_CODE = 3571
+
+        private const val PREFS_NAME = "dashx_rn_prefs"
+        private const val KEY_PERMISSION_REQUESTED = "notification_permission_requested"
 
         // Mirrors iOS UNAuthorizationStatus values used by the JS layer.
         private const val PERMISSION_NOT_DETERMINED = 0

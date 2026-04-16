@@ -7,6 +7,8 @@ import { EmitterSubscription } from 'react-native';
 export enum DashXErrorCode {
   /** An unspecified error occurred. */
   EUNSPECIFIED = 'EUNSPECIFIED',
+  /** The operation is not supported on this platform. */
+  EUNSUPPORTED = 'EUNSUPPORTED',
 }
 
 export interface ConfigureOptions {

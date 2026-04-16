@@ -42,8 +42,5 @@ buck-out/
 \.buckd/
 *.keystore
 
-# Cursor plans
+# Cursor
 .cursor
-.claude
-.qoder
-/plan

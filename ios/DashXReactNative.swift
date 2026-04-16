@@ -134,7 +134,15 @@ class DashXReactNative: RCTEventEmitter {
 
     @objc(setLogLevel:)
     func setLogLevel(_ level: Double) {
-        let logLevel = DashXLog.LogLevel(rawValue: Int(level)) ?? DashXLog.LogLevel.off
+        // JS contract: 0 = off, 1 = errors, 2 = debug
+        // Native SDK:  off = -1, error = 0, info = 1, debug = 2
+        let logLevel: DashXLog.LogLevel
+        switch Int(level) {
+        case 0: logLevel = .off
+        case 1: logLevel = .error
+        case 2: logLevel = .debug
+        default: logLevel = .off
+        }
         DashXLog.setLogLevel(to: logLevel)
     }
 

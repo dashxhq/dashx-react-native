@@ -110,10 +110,14 @@ describe('setIdentity', () => {
     expect(() => DashX.setIdentity(null, 'token')).toThrow('uid is required');
   });
 
-  it('throws if token is missing', () => {
-    expect(() => DashX.setIdentity('uid', null)).toThrow(
-      'token is required'
-    );
+  it('passes null token through to native', () => {
+    DashX.setIdentity('uid', null);
+    expect(mockNativeModule.setIdentity).toHaveBeenCalledWith('uid', null);
+  });
+
+  it('passes undefined token as null to native', () => {
+    DashX.setIdentity('uid');
+    expect(mockNativeModule.setIdentity).toHaveBeenCalledWith('uid', null);
   });
 });
 

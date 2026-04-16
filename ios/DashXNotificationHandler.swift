@@ -2,6 +2,25 @@ import Foundation
 import UIKit
 import UserNotifications
 import DashX
+#if canImport(FirebaseMessaging)
+import FirebaseMessaging
+#endif
+
+/// The result of handling a notification response.
+/// Consumers can use `url` to navigate and `actionIdentifier` for custom action handling.
+@objc(DashXNotificationResponseResult)
+public final class DashXNotificationResponseResult: NSObject {
+    @objc public let userInfo: [AnyHashable: Any]
+    @objc public let actionIdentifier: String
+    /// The DashX notification URL, if present in the payload.
+    @objc public let url: URL?
+
+    init(userInfo: [AnyHashable: Any], actionIdentifier: String, url: URL?) {
+        self.userInfo = userInfo
+        self.actionIdentifier = actionIdentifier
+        self.url = url
+    }
+}
 
 @objc(DashXNotificationHandler)
 public final class DashXNotificationHandler: NSObject {
@@ -11,6 +30,10 @@ public final class DashXNotificationHandler: NSObject {
         userInfo: [AnyHashable: Any],
         completionHandler: @escaping (UIBackgroundFetchResult) -> Void
     ) {
+        #if canImport(FirebaseMessaging)
+        Messaging.messaging().appDidReceiveMessage(userInfo)
+        #endif
+
         DashXEventEmitter.instance.dispatch(
             name: "messageReceived",
             body: bridgeSafePayload(from: userInfo)
@@ -61,8 +84,13 @@ public final class DashXNotificationHandler: NSObject {
     }
 
     @objc
-    public static func handleNotificationResponse(_ response: UNNotificationResponse) {
+    @discardableResult
+    public static func handleNotificationResponse(_ response: UNNotificationResponse) -> DashXNotificationResponseResult {
         let userInfo = response.notification.request.content.userInfo
+
+        #if canImport(FirebaseMessaging)
+        Messaging.messaging().appDidReceiveMessage(userInfo)
+        #endif
 
         DashXEventEmitter.instance.dispatch(
             name: "messageReceived",
@@ -74,7 +102,61 @@ public final class DashXNotificationHandler: NSObject {
         } else {
             DashX.trackMessage(message: userInfo, event: .clicked)
         }
+
+        let notificationUrl = userInfo.dashxNotificationUrl()
+
+        return DashXNotificationResponseResult(
+            userInfo: userInfo,
+            actionIdentifier: response.actionIdentifier,
+            url: notificationUrl
+        )
     }
+
+    // MARK: - Device Token
+
+    /// Bridges the APNS device token to Firebase Cloud Messaging and registers
+    /// the FCM token with DashX. Call this from
+    /// `application(_:didRegisterForRemoteNotificationsWithDeviceToken:)`.
+    @objc
+    public static func handleDeviceToken(_ deviceToken: Data) {
+        #if canImport(FirebaseMessaging)
+        Messaging.messaging().setAPNSToken(deviceToken, type: .unknown)
+        Messaging.messaging().token { token, error in
+            if let token = token {
+                DashX.setFCMToken(to: token)
+            }
+        }
+        #endif
+    }
+
+    // MARK: - Foreground Notification
+
+    /// Handles a notification that arrived while the app is in the foreground.
+    /// Tracks the delivery event, emits `messageReceived` to JS, forwards to
+    /// Firebase analytics, and presents the notification as a banner with sound.
+    /// Call this from `userNotificationCenter(_:willPresent:withCompletionHandler:)`.
+    @objc
+    public static func handleForegroundNotification(
+        _ notification: UNNotification,
+        completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        let userInfo = notification.request.content.userInfo
+
+        #if canImport(FirebaseMessaging)
+        Messaging.messaging().appDidReceiveMessage(userInfo)
+        #endif
+
+        DashX.trackMessage(message: userInfo, event: .delivered)
+
+        DashXEventEmitter.instance.dispatch(
+            name: "messageReceived",
+            body: bridgeSafePayload(from: userInfo)
+        )
+
+        completionHandler([.banner, .sound])
+    }
+
+    // MARK: - Private Helpers
 
     private static func createNotification(id: String, content: UNMutableNotificationContent) {
         let request = UNNotificationRequest(identifier: id, content: content, trigger: nil)
