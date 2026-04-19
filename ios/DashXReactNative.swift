@@ -16,7 +16,7 @@ class DashXReactNative: RCTEventEmitter {
     }
 
     override func supportedEvents() -> [String] {
-        return ["messageReceived", "linkReceived"]
+        return ["messageReceived", "linkReceived", "notificationClicked"]
     }
 
     @objc(configure:)

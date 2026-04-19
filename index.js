@@ -63,7 +63,7 @@ const DashX = {
         'DashX.setIdentity: uid is required and must be a string'
       );
     }
-    return getNativeDashX().setIdentity(uid, token || null);
+    return getNativeDashX().setIdentity(uid, token ?? null);
   },
 
   reset() {
@@ -213,6 +213,15 @@ const DashX = {
       throw new Error('DashX.onLinkReceived: callback must be a function');
     }
     return getEventEmitter().addListener('linkReceived', callback);
+  },
+
+  onNotificationClicked(callback) {
+    if (typeof callback !== 'function') {
+      throw new Error(
+        'DashX.onNotificationClicked: callback must be a function'
+      );
+    }
+    return getEventEmitter().addListener('notificationClicked', callback);
   },
 };
 

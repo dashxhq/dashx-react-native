@@ -4,6 +4,9 @@ import { TurboModuleRegistry } from 'react-native';
 export interface Spec extends TurboModule {
   configure(options: Object): void;
   identify(options: Object | null): void;
+  // Both optional — JS `null` is passed straight to the native bridge,
+  // which accepts nullable strings on both platforms and forwards to the
+  // DashX SDK's nil-accepting `setIdentity(uid:token:)` API.
   setIdentity(uid: string | null, token: string | null): void;
   reset(): void;
   track(event: string, data: Object | null): void;

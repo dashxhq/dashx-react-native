@@ -2,9 +2,7 @@ import Foundation
 import UIKit
 import UserNotifications
 import DashX
-#if canImport(FirebaseMessaging)
 import FirebaseMessaging
-#endif
 
 /// The result of handling a notification response.
 /// Consumers can use `url` to navigate and `actionIdentifier` for custom action handling.
@@ -14,11 +12,15 @@ public final class DashXNotificationResponseResult: NSObject {
     @objc public let actionIdentifier: String
     /// The DashX notification URL, if present in the payload.
     @objc public let url: URL?
+    /// The resolved navigation intent for the tap / action button.
+    /// Non-@objc (the enum isn't representable in Obj-C); read via Swift.
+    public let navigationAction: NavigationAction?
 
-    init(userInfo: [AnyHashable: Any], actionIdentifier: String, url: URL?) {
+    init(userInfo: [AnyHashable: Any], actionIdentifier: String, url: URL?, navigationAction: NavigationAction?) {
         self.userInfo = userInfo
         self.actionIdentifier = actionIdentifier
         self.url = url
+        self.navigationAction = navigationAction
     }
 }
 
@@ -30,9 +32,7 @@ public final class DashXNotificationHandler: NSObject {
         userInfo: [AnyHashable: Any],
         completionHandler: @escaping (UIBackgroundFetchResult) -> Void
     ) {
-        #if canImport(FirebaseMessaging)
         Messaging.messaging().appDidReceiveMessage(userInfo)
-        #endif
 
         DashXEventEmitter.instance.dispatch(
             name: "messageReceived",
@@ -88,9 +88,7 @@ public final class DashXNotificationHandler: NSObject {
     public static func handleNotificationResponse(_ response: UNNotificationResponse) -> DashXNotificationResponseResult {
         let userInfo = response.notification.request.content.userInfo
 
-        #if canImport(FirebaseMessaging)
         Messaging.messaging().appDidReceiveMessage(userInfo)
-        #endif
 
         DashXEventEmitter.instance.dispatch(
             name: "messageReceived",
@@ -104,11 +102,25 @@ public final class DashXNotificationHandler: NSObject {
         }
 
         let notificationUrl = userInfo.dashxNotificationUrl()
+        let dashxData = userInfo.dashxNotificationData()
+        let navigationAction = dashxData?.navigationAction(forActionIdentifier: response.actionIdentifier)
+
+        if response.actionIdentifier != UNNotificationDismissActionIdentifier {
+            DashXEventEmitter.instance.dispatch(
+                name: "notificationClicked",
+                body: [
+                    "notification": bridgeSafePayload(from: userInfo),
+                    "action": jsonDictionary(from: navigationAction) ?? NSNull(),
+                    "actionIdentifier": response.actionIdentifier,
+                ]
+            )
+        }
 
         return DashXNotificationResponseResult(
             userInfo: userInfo,
             actionIdentifier: response.actionIdentifier,
-            url: notificationUrl
+            url: notificationUrl,
+            navigationAction: navigationAction
         )
     }
 
@@ -119,14 +131,21 @@ public final class DashXNotificationHandler: NSObject {
     /// `application(_:didRegisterForRemoteNotificationsWithDeviceToken:)`.
     @objc
     public static func handleDeviceToken(_ deviceToken: Data) {
-        #if canImport(FirebaseMessaging)
-        Messaging.messaging().setAPNSToken(deviceToken, type: .unknown)
+        // Force the APNs environment explicitly rather than using `.unknown`
+        // (auto-detect). Firebase's auto-detection reads the token's aps
+        // entitlement from the signed binary and sometimes mis-tags dev
+        // builds as production, producing an FCM token whose pushes silently
+        // fail at APNs with 410 Unregistered.
+        #if DEBUG
+        Messaging.messaging().setAPNSToken(deviceToken, type: .sandbox)
+        #else
+        Messaging.messaging().setAPNSToken(deviceToken, type: .prod)
+        #endif
         Messaging.messaging().token { token, error in
             if let token = token {
                 DashX.setFCMToken(to: token)
             }
         }
-        #endif
     }
 
     // MARK: - Foreground Notification
@@ -142,9 +161,7 @@ public final class DashXNotificationHandler: NSObject {
     ) {
         let userInfo = notification.request.content.userInfo
 
-        #if canImport(FirebaseMessaging)
         Messaging.messaging().appDidReceiveMessage(userInfo)
-        #endif
 
         DashX.trackMessage(message: userInfo, event: .delivered)
 
@@ -195,6 +212,24 @@ public final class DashXNotificationHandler: NSObject {
             }
         }
         task.resume()
+    }
+
+    /// Serializes a ``NavigationAction`` into the JS-bridge shape mirrored by
+    /// `NavigationAction` in `index.d.ts`. Returns `nil` for `nil` input.
+    private static func jsonDictionary(from action: NavigationAction?) -> [String: Any]? {
+        guard let action else { return nil }
+        switch action {
+        case .deepLink(let url):
+            return ["type": "deepLink", "url": url.absoluteString]
+        case .screen(let name, let data):
+            var dict: [String: Any] = ["type": "screen", "name": name]
+            if let data { dict["data"] = data }
+            return dict
+        case .richLanding(let url):
+            return ["type": "richLanding", "url": url.absoluteString]
+        case .clickAction(let actionString):
+            return ["type": "clickAction", "action": actionString]
+        }
     }
 
     private static func bridgeSafePayload(from userInfo: [AnyHashable: Any]) -> [String: Any] {
