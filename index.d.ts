@@ -74,6 +74,12 @@ export type NavigationAction =
   | { type: 'richLanding'; url: string }
   | { type: 'clickAction'; action: string };
 
+export interface NotificationClickedEvent {
+  notification: NotificationMessage;
+  action: NavigationAction | null;
+  actionIdentifier: string;
+}
+
 export interface ProcessURLOptions {
   source?: string;
   forwardToLinkHandler?: boolean;
@@ -92,9 +98,11 @@ export interface DashXInstance {
   identify(options: IdentifyOptions): void;
 
   /**
-   * Set user identity using a UID and authentication token.
+   * Set user identity using a UID and authentication token. Both are
+   * nullable — passing `null` clears that field on the native SDK. Empty
+   * strings are forwarded as-is (no coercion to `null`).
    */
-  setIdentity(uid: string, token?: string | null): void;
+  setIdentity(uid: string | null, token?: string | null): void;
 
   /**
    * Clear the current user identity and reset SDK state.
@@ -224,6 +232,18 @@ export interface DashXInstance {
    * Returns a subscription that can be removed via `.remove()`.
    */
   onLinkReceived(callback: (url: string) => void): EmitterSubscription;
+
+  /**
+   * Register a listener for notification tap events. Fired when the user taps
+   * a DashX notification or one of its action buttons. The callback receives
+   * the full notification payload, the resolved `NavigationAction` (parsed
+   * from the payload; `null` if no navigation intent could be resolved), and
+   * the raw `actionIdentifier` from `UNNotificationResponse`.
+   * Returns a subscription that can be removed via `.remove()`.
+   */
+  onNotificationClicked(
+    callback: (event: NotificationClickedEvent) => void
+  ): EmitterSubscription;
 }
 
 declare const DashX: DashXInstance;

@@ -21,8 +21,15 @@ Pod::Spec.new do |s|
   install_modules_dependencies(s)
 
   # DashX iOS SDK — consumers must provide the source in their Podfile:
-  #   pod 'DashX', :git => 'https://github.com/dashxhq/dashx-ios.git', :tag => '1.1.9'
+  #   pod 'DashX/SDK', :git => 'https://github.com/dashxhq/dashx-ios.git', :tag => '1.3.1'
   # For local development:
   #   pod 'DashX', :path => '../dashx-ios'
-  s.dependency "DashX", "~> 1.1.9"
+  s.dependency "DashX/SDK"
+
+  # Hard dependency so that `canImport(FirebaseMessaging)`
+  # evaluates at this pod's compile time, where consumer-Podfile pods aren't
+  # visible — so an "optional" guard silently elides every Firebase code path.
+  # Consumers should set `use_modular_headers!` (or `:modular_headers => true`
+  # on FirebaseMessaging) in their Podfile so this Swift import resolves.
+  s.dependency "FirebaseMessaging"
 end
