@@ -106,8 +106,25 @@ describe('setIdentity', () => {
     );
   });
 
-  it('throws if uid is missing', () => {
-    expect(() => DashX.setIdentity(null, 'token')).toThrow('uid is required');
+  it('passes null uid through to native', () => {
+    DashX.setIdentity(null, 'token');
+    expect(mockNativeModule.setIdentity).toHaveBeenCalledWith(null, 'token');
+  });
+
+  it('normalizes undefined uid to null', () => {
+    DashX.setIdentity(undefined, 'token');
+    expect(mockNativeModule.setIdentity).toHaveBeenCalledWith(null, 'token');
+  });
+
+  it('passes empty-string uid through to native without coercing to null', () => {
+    DashX.setIdentity('', 'token');
+    expect(mockNativeModule.setIdentity).toHaveBeenCalledWith('', 'token');
+  });
+
+  it('throws if uid is not a string or null', () => {
+    expect(() => DashX.setIdentity(42, 'token')).toThrow(
+      'uid must be a string or null'
+    );
   });
 
   it('passes null token through to native', () => {
@@ -115,9 +132,20 @@ describe('setIdentity', () => {
     expect(mockNativeModule.setIdentity).toHaveBeenCalledWith('uid', null);
   });
 
+  it('passes empty-string token through to native without coercing to null', () => {
+    DashX.setIdentity('uid', '');
+    expect(mockNativeModule.setIdentity).toHaveBeenCalledWith('uid', '');
+  });
+
   it('passes undefined token as null to native', () => {
     DashX.setIdentity('uid');
     expect(mockNativeModule.setIdentity).toHaveBeenCalledWith('uid', null);
+  });
+
+  it('throws if token is not a string or null', () => {
+    expect(() => DashX.setIdentity('uid', 42)).toThrow(
+      'token must be a string or null'
+    );
   });
 });
 
