@@ -20,20 +20,13 @@ Pod::Spec.new do |s|
   # Since our minimum supported RN version is 0.74, we can call it directly.
   install_modules_dependencies(s)
 
-  # DashX iOS SDK. We don't publish `dashx-ios` to the CocoaPods trunk —
-  # consumer apps always declare the source themselves in their own Podfile,
-  # either as a git tag or a local path:
-  #
+  # DashX iOS SDK — consumers must provide the source in their Podfile:
   #   pod 'DashX/SDK', :git => 'https://github.com/dashxhq/dashx-ios.git', :tag => '1.3.1'
-  # or:
-  #   pod 'DashX/SDK', :path => '../dashx-ios'
-  #
-  # This `s.dependency` line just records the requirement — CocoaPods resolves
-  # it from whatever source the consumer specified. No version constraint so
-  # we don't have to bump this podspec every time dashx-ios releases a tag.
+  # For local development:
+  #   pod 'DashX', :path => '../dashx-ios'
   s.dependency "DashX/SDK"
 
-  # Hard dependency, not `canImport`-optional. `canImport(FirebaseMessaging)`
+  # Hard dependency so that `canImport(FirebaseMessaging)`
   # evaluates at this pod's compile time, where consumer-Podfile pods aren't
   # visible — so an "optional" guard silently elides every Firebase code path.
   # Consumers should set `use_modular_headers!` (or `:modular_headers => true`
