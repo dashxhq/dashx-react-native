@@ -98,9 +98,11 @@ export interface DashXInstance {
   identify(options: IdentifyOptions): void;
 
   /**
-   * Set user identity using a UID and authentication token.
+   * Set user identity using a UID and authentication token. Both are
+   * nullable — passing `null` clears that field on the native SDK. Empty
+   * strings are forwarded as-is (no coercion to `null`).
    */
-  setIdentity(uid: string, token?: string | null): void;
+  setIdentity(uid: string | null, token?: string | null): void;
 
   /**
    * Clear the current user identity and reset SDK state.

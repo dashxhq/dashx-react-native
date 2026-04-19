@@ -58,12 +58,16 @@ const DashX = {
   },
 
   setIdentity(uid, token) {
-    if (!uid || typeof uid !== 'string') {
-      throw new Error(
-        'DashX.setIdentity: uid is required and must be a string'
-      );
+    // Both uid and token are nullable passthroughs to the native SDK. Only
+    // validate TYPE here — the native side decides semantics. `undefined` is
+    // normalized to `null` because the RN bridge can't carry undefined.
+    if (uid !== null && uid !== undefined && typeof uid !== 'string') {
+      throw new Error('DashX.setIdentity: uid must be a string or null');
     }
-    return getNativeDashX().setIdentity(uid, token ?? null);
+    if (token !== null && token !== undefined && typeof token !== 'string') {
+      throw new Error('DashX.setIdentity: token must be a string or null');
+    }
+    return getNativeDashX().setIdentity(uid ?? null, token ?? null);
   },
 
   reset() {
