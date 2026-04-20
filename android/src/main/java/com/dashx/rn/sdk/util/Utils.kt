@@ -23,6 +23,19 @@ import kotlinx.serialization.json.put
 // of bugs that arose when Gson/org.json/kotlinx all coexisted.
 
 /**
+ * Factory seam for Writable instances. Production defaults to the JNI-backed
+ * `WritableNativeMap` / `WritableNativeArray`. JVM unit tests swap these to
+ * `JavaOnlyMap` / `JavaOnlyArray` (pure-Java, no JNI) — the native writables
+ * crash in a plain JUnit harness because their constructors call into
+ * `initHybrid()`. `internal` visibility keeps the seam invisible to SDK
+ * consumers.
+ */
+internal object WritableFactory {
+    var createMap: () -> WritableMap = { WritableNativeMap() }
+    var createArray: () -> WritableArray = { WritableNativeArray() }
+}
+
+/**
  * Convert a [ReadableMap] (RN → native boundary) into a kotlinx [JsonObject].
  * Returns `null` when [readableMap] is null, so callers can distinguish
  * "absent" from "empty".
@@ -94,7 +107,7 @@ fun convertReadableArrayToKJsonList(readableArray: ReadableArray?): List<JsonObj
  */
 fun convertJsonToMap(jsonObject: JsonObject?): WritableMap? {
     jsonObject ?: return null
-    val map: WritableMap = WritableNativeMap()
+    val map: WritableMap = WritableFactory.createMap()
     for ((key, element) in jsonObject) {
         when (element) {
             is JsonNull -> map.putNull(key)
@@ -112,7 +125,7 @@ fun convertJsonToMap(jsonObject: JsonObject?): WritableMap? {
  */
 fun convertJsonToArray(jsonArray: JsonArray?): WritableArray? {
     jsonArray ?: return null
-    val array: WritableArray = WritableNativeArray()
+    val array: WritableArray = WritableFactory.createArray()
     for (element in jsonArray) {
         when (element) {
             is JsonNull -> array.pushNull()
@@ -156,7 +169,7 @@ fun convertToWritableMap(
     map: Map<*, *>,
     blacklist: List<String> = emptyList<String>()
 ): WritableMap {
-    val writableMap: WritableMap = WritableNativeMap()
+    val writableMap: WritableMap = WritableFactory.createMap()
     val iterator: Iterator<String> = map.keys.iterator() as Iterator<String>
     while (iterator.hasNext()) {
         val key = iterator.next()

@@ -82,4 +82,12 @@ dependencies {
     implementation 'com.google.firebase:firebase-messaging-ktx:23.1.2'
 
     implementation "com.dashx:dashx-android:1.2.6"
+
+    // Unit tests for `util/Utils.kt` — JVM-only, no Robolectric. The RN
+    // `react-android` artifact is pulled in at test runtime (not as a
+    // runtime dep) so tests can reach `JavaOnlyMap` / `JavaOnlyArray` —
+    // pure-Java `ReadableMap` / `WritableMap` impls that stand in for the
+    // JNI-backed `WritableNativeMap` / `WritableNativeArray` in JVM tests.
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'com.facebook.react:react-android:+'
 }
