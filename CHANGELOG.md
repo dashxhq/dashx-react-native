@@ -5,13 +5,13 @@ All notable changes to `@dashx/react-native` are documented in this file. Format
 ## [1.3.0] — 2026-04-20
 
 ### Breaking
-- **`DashX` pod → `DashX/SDK`.** The podspec now depends on the `DashX/SDK` subspec of [dashx-ios 1.3.2+](https://github.com/dashxhq/dashx-ios) with no version constraint. Consumers must update their Podfile:
+- **`DashX` pod → `DashX/SDK`.** The podspec now depends on the `DashX/SDK` subspec of [dashx-ios 1.4.0+](https://github.com/dashxhq/dashx-ios) with no version constraint. Consumers must update their Podfile:
   ```ruby
   # before
   pod 'DashX', :git => 'https://github.com/dashxhq/dashx-ios.git', :tag => '1.1.9'
 
   # after
-  pod 'DashX/SDK', :git => 'https://github.com/dashxhq/dashx-ios.git', :tag => '1.3.2'
+  pod 'DashX/SDK', :git => 'https://github.com/dashxhq/dashx-ios.git', :tag => '1.4.0'
   ```
 - **`FirebaseMessaging` is now a hard dependency.** Previously the bridge guarded Firebase usage with `#if canImport(FirebaseMessaging)`, but `canImport` doesn't see consumer-Podfile pods at this pod's compile time, so the guard silently elided every FCM code path — push registration stopped working on fresh installs. Consumers must enable modular headers in their Podfile:
   ```ruby
