@@ -75,7 +75,7 @@ repositories {
 
 dependencies {
     compileOnly 'com.facebook.react:react-android:+'
-    implementation 'com.google.code.gson:gson:2.9.0'
+
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0'
 
     // Ensure Firebase Messaging types are available for FCM service subclass
