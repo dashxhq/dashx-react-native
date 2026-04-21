@@ -1,5 +1,22 @@
 import groovy.json.JsonSlurper
 
+// Standalone build path (used by CI via `./gradlew :testDebugUnitTest` from
+// this `android/` directory). When consumer apps autolink the bridge, this
+// buildscript block is evaluated as a subproject too but is a no-op since
+// the consumer's root already provides identical or newer classpath
+// entries — AGP/Kotlin plugin classes are loaded once and shared.
+buildscript {
+  repositories {
+    google()
+    mavenCentral()
+    gradlePluginPortal()
+  }
+  dependencies {
+    classpath 'com.android.tools.build:gradle:8.7.2'
+    classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:2.2.0'
+  }
+}
+
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
@@ -33,6 +50,17 @@ android {
         versionName getVersionFromNpm()
 
         buildConfigField 'String', 'VERSION_NAME', "\"$versionName\""
+    }
+    // Align Java + Kotlin target so the standalone CI build (which doesn't
+    // inherit RN's defaults) doesn't trip "Inconsistent JVM-target
+    // compatibility". Consumers autolinking the bridge already set these
+    // at root scope; redeclaring here is a no-op when versions match.
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = '17'
     }
     lint {
         abortOnError false
