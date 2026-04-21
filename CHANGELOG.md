@@ -2,6 +2,19 @@
 
 All notable changes to `@dashx/react-native` are documented in this file. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions follow [SemVer](https://semver.org/).
 
+## [1.3.1] — 2026-04-21
+
+### Added
+- **`DashX.onNotificationClicked` now fires on Android.** Previously only wired on iOS — the Android bridge didn't register a `DashXNotificationListener` with the SDK, so JS listeners never received tap events. The bridge now registers a listener in `DashXReactNativeModuleImpl.initialize()` and emits a `notificationClicked` event matching the iOS shape: `{ notification, action, actionIdentifier }`. `actionIdentifier` is the tapped button's identifier (body tap → empty string, matching iOS's always-a-string contract).
+- Android JVM unit tests for the kotlinx-serialization conversion helpers (`Utils.kt`) — 16 tests covering all primitive types, nested objects/arrays, null handling, round-trips, and regression cases for the two pre-migration crash paths. Runs as a dedicated `android-test` CI job on PRs to `develop` and pushes to `main`.
+
+### Changed
+- **Android JSON handling consolidated on kotlinx-serialization.** Removed the Gson dependency and the `org.json`-shaped helpers (`MapUtil.java`, `ArrayUtil.java`), rewrote `Utils.kt` to use kotlinx `JsonObject` / `JsonArray` end-to-end. Matches how dashx-android itself serializes (its Apollo scalar mapping is `kotlinx.serialization.json.JsonObject`), eliminates the string round-trips the previous cross-library code was doing, and removes a class of bugs where three JSON libraries coexisted. Internal helper signatures changed (`convertMapToJson` now returns `JsonObject?`, `convertJsonToMap` now takes `JsonObject?`); consumer JS API is unchanged.
+- `android/build.gradle` dep on `com.dashx:dashx-android` bumped `1.2.6` → `1.2.7` to receive the new 3-arg `onNotificationClicked(payload, action, actionIdentifier)` listener overload.
+
+### Fixed
+- `uploadAsset` / `fetchAsset` on Android previously failed to compile against `@dashx/react-native` due to a type mismatch in the TurboModule-migration callsite (`org.json.JSONObject` passed to a Gson `JsonObject`-typed helper, introduced in 1.2.0's TurboModule PR and never caught because no Android consumer had built the bridge since). Fixed by the Gson → kotlinx migration described above.
+
 ## [1.3.0] — 2026-04-20
 
 ### Breaking

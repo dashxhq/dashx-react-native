@@ -17,20 +17,28 @@ import com.dashx.android.data.Asset
 import com.facebook.react.bridge.*
 import com.facebook.react.modules.core.PermissionAwareActivity
 import com.facebook.react.modules.core.PermissionListener
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.jsonObject
 
 class DashXReactNativeModuleImpl(private val reactContext: ReactApplicationContext) {
     private val tag = DashXReactNativeModuleImpl::class.java.simpleName
 
+    // Bridges SDK notification-click callbacks to the JS
+    // `DashX.onNotificationClicked` listener. Registered in `initialize`,
+    // removed in `invalidate` so we don't leak across RN reloads.
+    private val notificationClickedListener = DashXNotificationClickedListener(reactContext)
+
     fun initialize() {
         MessageReceivedEventHolder.reactContext = reactContext
+        DashX.registerNotificationListener(notificationClickedListener)
     }
 
     fun invalidate() {
         MessageReceivedEventHolder.reactContext = null
+        DashX.unregisterNotificationListener(notificationClickedListener)
     }
 
     fun setLogLevel(level: Double) {
@@ -148,14 +156,14 @@ class DashXReactNativeModuleImpl(private val reactContext: ReactApplicationConte
                 promise.reject(E_UNSPECIFIED, it.message)
             },
             onSuccess = {
-                promise.resolve(convertJsonToMap(convertKJsonToJson(it)))
+                promise.resolve(convertJsonToMap(it))
             }
         )
     }
 
     fun searchRecords(resource: String, options: ReadableMap?, promise: Promise) {
         val jsonFilter = try {
-            convertMapToJson(options?.getMap("filter"))?.let { convertJsonToKJson(it) }
+            convertMapToJson(options?.getMap("filter"))
         } catch (e: Exception) {
             DashXLog.d(tag, e.message)
             promise.reject(E_UNSPECIFIED, "Error parsing filter: ${e.message}")
@@ -209,7 +217,7 @@ class DashXReactNativeModuleImpl(private val reactContext: ReactApplicationConte
             onSuccess = { records ->
                 val readableArray = Arguments.createArray()
                 records.forEach {
-                    readableArray.pushMap(convertJsonToMap(convertKJsonToJson(it)))
+                    readableArray.pushMap(convertJsonToMap(it))
                 }
                 promise.resolve(readableArray)
             }
@@ -221,22 +229,32 @@ class DashXReactNativeModuleImpl(private val reactContext: ReactApplicationConte
             onError = {
                 promise.reject(E_UNSPECIFIED, it.message)
             },
+            // The SDK hands back a typed wrapper whose `preferenceData`
+            // field is the raw kotlinx `JsonObject`. Unwrap and flatten so
+            // the JS side receives the prefs directly — matches how the iOS
+            // bridge resolves `DashXClient.fetchStoredPreferences`.
             onSuccess = { content ->
-                promise.resolve(convertJsonToMap(convertKJsonToJson(Json.decodeFromString<JsonObject>(Json.encodeToString(content)))))
+                promise.resolve(convertJsonToMap(content.preferenceData))
             }
         )
     }
 
     fun saveStoredPreferences(preferenceData: ReadableMap?, promise: Promise) {
-        val preferencesString = MapUtil.toJSONElement(preferenceData).toString()
+        // A null/empty payload maps to an empty JSON object — matches the
+        // SDK's "I received preferences but they're empty" contract and
+        // replaces a pre-migration NPE path that crashed when the caller
+        // passed `null`.
+        val preferencesJson = convertMapToJson(preferenceData) ?: buildJsonObject { }
 
         DashX.saveStoredPreferences(
-            Json.decodeFromString<JsonObject>(preferencesString),
+            preferencesJson,
             onError = {
                 promise.reject(E_UNSPECIFIED, it.message)
             },
+            // Mutation response is just `{ success: Boolean }` — resolve the
+            // Promise with that Boolean, matching what the iOS bridge does.
             onSuccess = { content ->
-                promise.resolve(convertJsonToMap(convertKJsonToJson(Json.decodeFromString<JsonObject>(Json.encodeToString(content)))))
+                promise.resolve(content.success)
             }
         )
     }
@@ -275,9 +293,9 @@ class DashXReactNativeModuleImpl(private val reactContext: ReactApplicationConte
             attribute = attribute,
             onSuccess = { asset ->
                 try {
-                    val jsonString = Json.encodeToString(asset)
-                    val jsonObject = org.json.JSONObject(jsonString)
-                    promise.resolve(convertJsonToMap(jsonObject))
+                    // `Asset` is `@Serializable` — go straight to a
+                    // `JsonElement` tree without the string + parser hop.
+                    promise.resolve(convertJsonToMap(Json.encodeToJsonElement(asset).jsonObject))
                 } catch (e: Exception) {
                     promise.resolve(null)
                 }
@@ -293,9 +311,7 @@ class DashXReactNativeModuleImpl(private val reactContext: ReactApplicationConte
             assetId = assetId,
             onSuccess = { asset ->
                 try {
-                    val jsonString = Json.encodeToString(asset)
-                    val jsonObject = org.json.JSONObject(jsonString)
-                    promise.resolve(convertJsonToMap(jsonObject))
+                    promise.resolve(convertJsonToMap(Json.encodeToJsonElement(asset).jsonObject))
                 } catch (e: Exception) {
                     promise.resolve(null)
                 }

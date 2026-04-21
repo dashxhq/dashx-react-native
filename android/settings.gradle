@@ -1,0 +1,27 @@
+// Minimal standalone Gradle config so CI can run the bridge's unit tests
+// (`./gradlew :testDebugUnitTest`) without checking out a consumer app.
+//
+// Consumer apps don't read this file — when the bridge is autolinked by a
+// React Native app, the consumer's own `settings.gradle` drives the build
+// and this one is ignored. Both paths coexist.
+
+pluginManagement {
+  repositories {
+    gradlePluginPortal()
+    google()
+    mavenCentral()
+  }
+}
+
+dependencyResolutionManagement {
+  // CI may run without autolinking providing repositories — declare them
+  // here so `testImplementation 'com.facebook.react:react-android:+'` and
+  // the `com.dashx:dashx-android:x.y.z` runtime dep resolve.
+  repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+  repositories {
+    google()
+    mavenCentral()
+  }
+}
+
+rootProject.name = 'dashx-react-native'
