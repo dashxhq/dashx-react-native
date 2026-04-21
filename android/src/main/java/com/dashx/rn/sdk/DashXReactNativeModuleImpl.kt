@@ -26,12 +26,19 @@ import kotlinx.serialization.json.jsonObject
 class DashXReactNativeModuleImpl(private val reactContext: ReactApplicationContext) {
     private val tag = DashXReactNativeModuleImpl::class.java.simpleName
 
+    // Bridges SDK notification-click callbacks to the JS
+    // `DashX.onNotificationClicked` listener. Registered in `initialize`,
+    // removed in `invalidate` so we don't leak across RN reloads.
+    private val notificationClickedListener = DashXNotificationClickedListener(reactContext)
+
     fun initialize() {
         MessageReceivedEventHolder.reactContext = reactContext
+        DashX.registerNotificationListener(notificationClickedListener)
     }
 
     fun invalidate() {
         MessageReceivedEventHolder.reactContext = null
+        DashX.unregisterNotificationListener(notificationClickedListener)
     }
 
     fun setLogLevel(level: Double) {
