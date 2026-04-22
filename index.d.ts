@@ -165,8 +165,16 @@ export interface DashXInstance {
   setLogLevel(level: LogLevel): void;
 
   /**
-   * Register a listener for incoming push notification messages.
+   * Register a listener for incoming push notifications.
    * Returns a subscription that can be removed via `.remove()`.
+   */
+  onPushNotificationReceived(
+    callback: (message: NotificationMessage) => void
+  ): EmitterSubscription;
+
+  /**
+   * @deprecated Use `onPushNotificationReceived` instead.
+   * Will be removed in the next major version.
    */
   onMessageReceived(
     callback: (message: NotificationMessage) => void

@@ -2,6 +2,14 @@
 
 All notable changes to `@dashx/react-native` are documented in this file. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions follow [SemVer](https://semver.org/).
 
+## [1.3.2] — 2026-04-22
+
+### Added
+- **`DashX.onPushNotificationReceived(callback)`** — new name for registering a foreground push listener. Same signature, same subscription shape; matches the `@dashx/browser` API so cross-platform apps using a Metro `.web.ts` wrapper can share the callsite.
+
+### Deprecated
+- **`DashX.onMessageReceived(callback)`** is now a deprecated alias of `onPushNotificationReceived` and logs a one-time `console.warn` on first call. The name leaked up from Android's Firebase `FirebaseMessagingService.onMessageReceived` override and was ambiguous in the DashX domain ("message" overloaded with `trackMessage` and in-app notifications). Scheduled for removal in the next major version.
+
 ## [1.3.1] — 2026-04-21
 
 ### Added

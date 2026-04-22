@@ -29,6 +29,8 @@ function getNativeDashX() {
   return _nativeDashX;
 }
 
+let _onMessageReceivedDeprecationWarned = false;
+
 let _eventEmitter = null;
 function getEventEmitter() {
   if (!_eventEmitter) {
@@ -142,11 +144,23 @@ const DashX = {
     return getNativeDashX().setLogLevel(level);
   },
 
-  onMessageReceived(callback) {
+  onPushNotificationReceived(callback) {
     if (typeof callback !== 'function') {
-      throw new Error('DashX.onMessageReceived: callback must be a function');
+      throw new Error(
+        'DashX.onPushNotificationReceived: callback must be a function'
+      );
     }
     return getEventEmitter().addListener('messageReceived', callback);
+  },
+
+  onMessageReceived(callback) {
+    if (!_onMessageReceivedDeprecationWarned) {
+      console.warn(
+        'DashX.onMessageReceived is deprecated and will be removed in the next major version. Use DashX.onPushNotificationReceived instead.'
+      );
+      _onMessageReceivedDeprecationWarned = true;
+    }
+    return DashX.onPushNotificationReceived(callback);
   },
 
   uploadAsset(filePath, resource, attribute) {

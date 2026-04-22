@@ -310,20 +310,54 @@ describe('setLogLevel', () => {
   });
 });
 
-// --- onMessageReceived ---
+// --- onPushNotificationReceived ---
 
-describe('onMessageReceived', () => {
+describe('onPushNotificationReceived', () => {
   it('throws if callback is not a function', () => {
-    expect(() => DashX.onMessageReceived('not a function')).toThrow(
+    expect(() => DashX.onPushNotificationReceived('not a function')).toThrow(
       'callback must be a function'
     );
   });
 
   it('registers a listener for messageReceived events', () => {
     const callback = jest.fn();
+    const subscription = DashX.onPushNotificationReceived(callback);
+    expect(mockAddListener).toHaveBeenCalledWith('messageReceived', callback);
+    expect(subscription).toBeDefined();
+  });
+});
+
+// --- onMessageReceived (deprecated alias) ---
+
+describe('onMessageReceived (deprecated)', () => {
+  let warnSpy;
+
+  beforeEach(() => {
+    warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    warnSpy.mockRestore();
+  });
+
+  it('registers a listener and emits a deprecation warning on first call', () => {
+    const callback = jest.fn();
     const subscription = DashX.onMessageReceived(callback);
     expect(mockAddListener).toHaveBeenCalledWith('messageReceived', callback);
     expect(subscription).toBeDefined();
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('onMessageReceived is deprecated')
+    );
+  });
+
+  it('warns only once across repeated calls', () => {
+    warnSpy.mockClear();
+    DashX.onMessageReceived(jest.fn());
+    DashX.onMessageReceived(jest.fn());
+    DashX.onMessageReceived(jest.fn());
+    // The first call across the whole test run already consumed the one-shot
+    // warning (from the previous test). No new warnings should fire.
+    expect(warnSpy).not.toHaveBeenCalled();
   });
 });
 
