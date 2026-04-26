@@ -2,6 +2,37 @@
 
 All notable changes to `@dashx/react-native` are documented in this file. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions follow [SemVer](https://semver.org/).
 
+## [1.4.0] — 2026-04-27
+
+### Changed
+
+- **`DashX.unsubscribe()` now returns `Promise<{ success: boolean }>`** (was `void`). Matches `@dashx/browser`'s shape exactly — apps using a Metro `.web.ts` resolver can now share a single typed callsite across web and native.
+
+  **Migration**
+
+  Most existing call sites continue to work unchanged:
+
+  ```ts
+  DashX.unsubscribe()                          // ✓ fire-and-forget still works
+  await DashX.unsubscribe()                    // ✓ still works (return value just unused)
+  const { success } = await DashX.unsubscribe()  // new capability
+  ```
+
+  Two situations to watch for after upgrading:
+
+  - **Unhandled-rejection warnings.** Previously the native module surfaced errors only in its own logs; the JS API was silent. Now JS-side promise rejections fire on SDK-state problems (Firebase Messaging dependency missing, `configure()` not yet called) and transport failures (Firebase `deleteToken` failure, GraphQL / network errors). If you never caught errors before because there was nothing to catch, a fire-and-forget `DashX.unsubscribe()` may now surface "Possible Unhandled Promise Rejection" warnings in your console. Wrap with `.catch(...)` or `try / await` if those warnings are noisy.
+  - **TypeScript `: void` annotations.** `const x: void = DashX.unsubscribe()` no longer compiles. Vanishingly rare in practice but worth a grep.
+
+  **What the resolved value means**
+
+  - **`success: true`** — backend found and unsubscribed a matching contact.
+  - **`success: false`** — non-error outcome meaning "no matching contact found"; typically the anonymous UID rotated since subscribe, the FCM token is stale, the contact is already unsubscribed, or `unsubscribe()` was called on a device that never subscribed in this session. The device ends up unsubscribed in either case; the boolean is useful for diagnostics and analytics.
+  - **Promise rejection** — distinct from `success: false` so callers can branch on SDK-misuse vs legitimate no-match.
+
+- **Native pin bumps to pick up the underlying schema change:**
+  - `android/build.gradle` → `com.dashx:dashx-android` `1.2.7` → `1.2.8`. The bridge now passes `onSuccess` / `onError(DashXError)` callbacks to the native `DashX.unsubscribe(...)` and resolves/rejects the JS promise accordingly.
+  - iOS pod consumers should bump `pod 'DashX/SDK'` to `:tag => '1.5.0'` in their Podfile. The bridge now calls `DashX.unsubscribe { result in ... }` and resolves/rejects the JS promise from the `Result<Bool, Error>` completion.
+
 ## [1.3.2] — 2026-04-22
 
 ### Added

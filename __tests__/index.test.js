@@ -289,9 +289,22 @@ describe('subscribe', () => {
 });
 
 describe('unsubscribe', () => {
-  it('calls native unsubscribe', () => {
-    DashX.unsubscribe();
+  it('calls native unsubscribe and forwards the resolved success payload', async () => {
+    mockNativeModule.unsubscribe.mockResolvedValue({ success: true });
+    const result = await DashX.unsubscribe();
     expect(mockNativeModule.unsubscribe).toHaveBeenCalled();
+    expect(result).toEqual({ success: true });
+  });
+
+  it('forwards `success: false` (the no-matching-contact non-error outcome)', async () => {
+    mockNativeModule.unsubscribe.mockResolvedValue({ success: false });
+    const result = await DashX.unsubscribe();
+    expect(result).toEqual({ success: false });
+  });
+
+  it('propagates the native rejection to the caller', async () => {
+    mockNativeModule.unsubscribe.mockRejectedValue(new Error('EUNSPECIFIED'));
+    await expect(DashX.unsubscribe()).rejects.toThrow('EUNSPECIFIED');
   });
 });
 

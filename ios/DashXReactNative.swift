@@ -127,9 +127,16 @@ class DashXReactNative: RCTEventEmitter {
         DashX.subscribe()
     }
 
-    @objc
-    func unsubscribe() {
-        DashX.unsubscribe()
+    @objc(unsubscribe:reject:)
+    func unsubscribe(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        DashX.unsubscribe { result in
+            switch result {
+            case .success(let didUnsubscribe):
+                resolve(["success": didUnsubscribe])
+            case .failure(let error):
+                reject("EUNSPECIFIED", error.localizedDescription, error)
+            }
+        }
     }
 
     @objc(setLogLevel:)
