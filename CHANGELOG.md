@@ -20,7 +20,7 @@ All notable changes to `@dashx/react-native` are documented in this file. Format
 
   Two situations to watch for after upgrading:
 
-  - **Unhandled-rejection warnings.** Previously the native module surfaced errors only in its own logs; the JS API was silent. Now JS-side promise rejections fire on SDK-state problems (Firebase Messaging dependency missing, `configure()` not yet called) and transport failures (Firebase `deleteToken` failure, GraphQL / network errors). If you never caught errors before because there was nothing to catch, a fire-and-forget `DashX.unsubscribe()` may now surface "Possible Unhandled Promise Rejection" warnings in your console. Wrap with `.catch(...)` or `try / await` if those warnings are noisy. *This is the main reason this is a minor bump rather than a patch.*
+  - **Unhandled-rejection warnings.** Previously the native module surfaced errors only in its own logs; the JS API was silent. Now JS-side promise rejections fire on SDK-state problems (Firebase Messaging dependency missing, `configure()` not yet called) and transport failures (Firebase `deleteToken` failure, GraphQL / network errors). If you never caught errors before because there was nothing to catch, a fire-and-forget `DashX.unsubscribe()` may now surface "Possible Unhandled Promise Rejection" warnings in your console. Wrap with `.catch(...)` or `try / await` if those warnings are noisy.
   - **TypeScript `: void` annotations.** `const x: void = DashX.unsubscribe()` no longer compiles. Vanishingly rare in practice but worth a grep.
 
   **What the resolved value means**
