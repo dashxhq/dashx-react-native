@@ -35,7 +35,9 @@
   },
   "scripts": {
     "test": "jest",
-    "lint": "eslint index.js"
+    "lint": "eslint index.js && yarn run check-bridge-shim",
+    "sync-bridge-shim": "node scripts/generate-bridge-shim.js",
+    "check-bridge-shim": "node scripts/generate-bridge-shim.js && git diff --exit-code ios/DashXReactNative.mm"
   },
   "repository": {
     "type": "git",
