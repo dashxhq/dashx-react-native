@@ -1,3 +1,13 @@
+//
+// AUTO-GENERATED FROM DashXReactNative.swift — DO NOT EDIT.
+// Regenerate with `yarn sync-bridge-shim` after editing the Swift file.
+//
+// The Swift class's @objc method declarations are the source of truth.
+// This file mirrors them so old-arch React Native consumers (which discover
+// methods via RCT_EXTERN_METHOD) and new-arch consumers (which dispatch via
+// the codegen-generated TurboModule spec) both find consistent signatures.
+//
+
 #import <React/RCTBridgeModule.h>
 #import <React/RCTEventEmitter.h>
 
@@ -13,6 +23,8 @@ RCT_EXTERN_METHOD(identify:(NSDictionary *)options);
 
 RCT_EXTERN_METHOD(setIdentity:(NSString * _Nullable)uid token:(NSString * _Nullable)token);
 
+RCT_EXTERN_METHOD(reset);
+
 RCT_EXTERN_METHOD(track:(NSString *)event data:(NSDictionary * _Nullable)data);
 
 RCT_EXTERN_METHOD(screen:(NSString *)screenName data:(NSDictionary * _Nullable)data);
@@ -25,11 +37,9 @@ RCT_EXTERN_METHOD(fetchStoredPreferences:(RCTPromiseResolveBlock)resolve reject:
 
 RCT_EXTERN_METHOD(saveStoredPreferences:(NSDictionary *)preferenceData resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject);
 
-RCT_EXTERN_METHOD(reset);
-
 RCT_EXTERN_METHOD(subscribe);
 
-RCT_EXTERN_METHOD(unsubscribe);
+RCT_EXTERN_METHOD(unsubscribe:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject);
 
 RCT_EXTERN_METHOD(setLogLevel:(double)level);
 

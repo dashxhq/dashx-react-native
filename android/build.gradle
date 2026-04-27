@@ -109,7 +109,7 @@ dependencies {
     // Ensure Firebase Messaging types are available for FCM service subclass
     implementation 'com.google.firebase:firebase-messaging-ktx:23.1.2'
 
-    implementation "com.dashx:dashx-android:1.2.7"
+    implementation "com.dashx:dashx-android:1.2.8"
 
     // Unit tests for `util/Utils.kt` — JVM-only, no Robolectric. The RN
     // `react-android` artifact is pulled in at test runtime (not as a

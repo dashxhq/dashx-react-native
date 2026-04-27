@@ -263,8 +263,16 @@ class DashXReactNativeModuleImpl(private val reactContext: ReactApplicationConte
         DashX.subscribe()
     }
 
-    fun unsubscribe() {
-        DashX.unsubscribe()
+    fun unsubscribe(promise: Promise) {
+        DashX.unsubscribe(
+            onSuccess = { didUnsubscribe ->
+                val result = Arguments.createMap().apply {
+                    putBoolean("success", didUnsubscribe)
+                }
+                promise.resolve(result)
+            },
+            onError = { promise.reject(E_UNSPECIFIED, it.message) }
+        )
     }
 
     // --- iOS-only methods: no-op stubs on Android (JS guards prevent these from being called) ---

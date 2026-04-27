@@ -13,7 +13,7 @@ export interface Spec extends TurboModule {
   fetchStoredPreferences(): Promise<Object>;
   saveStoredPreferences(preferenceData: Object): Promise<Object>;
   subscribe(): void;
-  unsubscribe(): void;
+  unsubscribe(): Promise<Object>;
   setLogLevel(level: number): void;
   uploadAsset(
     filePath: string,

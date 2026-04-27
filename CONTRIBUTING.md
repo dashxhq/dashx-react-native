@@ -127,13 +127,50 @@ dashx-react-native/
       util/                       # Bridge conversion utilities
     build.gradle                  # Android build config
   ios/
-    DashXReactNative.swift        # iOS native module
-    DashXReactNative.mm           # Obj-C++ bridge exports
+    DashXReactNative.swift        # iOS native module — SOURCE OF TRUTH for bridge methods
+    DashXReactNative.mm           # Obj-C++ bridge exports — AUTO-GENERATED, see below
     DashXEventEmitter.swift       # Event emitter for push notifications
     DashXRCTAppDelegate.swift     # AppDelegate with Firebase/push handling
+  scripts/
+    generate-bridge-shim.js       # Regenerates DashXReactNative.mm from the Swift @objc decls
   DashXReactNative.podspec        # CocoaPods spec
   __tests__/                      # Jest tests
 ```
+
+## iOS bridge: editing methods
+
+`ios/DashXReactNative.mm` is **auto-generated** from `ios/DashXReactNative.swift`.
+Don't hand-edit it — your changes will be overwritten on the next regen, and CI
+will fail anyway because the committed `.mm` won't match what the script
+produces.
+
+Workflow when adding or changing a bridged method:
+
+1. Edit `ios/DashXReactNative.swift`. Each bridged method needs an `@objc`
+   decoration. Multi-arg methods use the explicit form
+   `@objc(methodName:label1:label2:)`; zero-arg methods use bare `@objc`.
+2. Run the regen:
+   ```sh
+   yarn sync-bridge-shim
+   ```
+3. Commit both the Swift change AND the regenerated `ios/DashXReactNative.mm`
+   in the same PR.
+
+CI verification: `yarn lint` chains `yarn check-bridge-shim`, which re-runs
+the generator and fails on a non-empty `git diff` against the committed
+`.mm`. So a forgotten `sync-bridge-shim` step is caught at PR time, not in
+production.
+
+Why the `.mm` exists at all: React Native's iOS bridge requires every Swift
+method to be declared in BOTH the Swift `@objc` form (for runtime dispatch)
+AND in `RCT_EXTERN_METHOD(...)` form in an Obj-C++ shim (for old-arch
+consumers' bridge module registration + new-arch compile-time selector
+verification). The script makes the Swift declarations the single source of
+truth and emits the matching shim mechanically.
+
+If the script ever fails with `unknown Swift parameter type "..."`, add a
+mapping for that type in `scripts/generate-bridge-shim.js`'s
+`SWIFT_TO_OBJC` table (one line, then re-run).
 
 ## Running Tests
 

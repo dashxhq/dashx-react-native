@@ -60,7 +60,7 @@ class DashXReactNativeModule(reactContext: ReactApplicationContext) :
     fun subscribe() = impl.subscribe()
 
     @ReactMethod
-    fun unsubscribe() = impl.unsubscribe()
+    fun unsubscribe(promise: Promise) = impl.unsubscribe(promise)
 
     @ReactMethod
     fun setLogLevel(level: Double) = impl.setLogLevel(level)

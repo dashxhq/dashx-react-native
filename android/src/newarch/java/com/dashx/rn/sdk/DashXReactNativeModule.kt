@@ -46,7 +46,7 @@ class DashXReactNativeModule(reactContext: ReactApplicationContext) :
 
     override fun subscribe() = impl.subscribe()
 
-    override fun unsubscribe() = impl.unsubscribe()
+    override fun unsubscribe(promise: Promise) = impl.unsubscribe(promise)
 
     override fun setLogLevel(level: Double) = impl.setLogLevel(level)
 

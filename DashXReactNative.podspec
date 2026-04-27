@@ -21,7 +21,7 @@ Pod::Spec.new do |s|
   install_modules_dependencies(s)
 
   # DashX iOS SDK — consumers must provide the source in their Podfile:
-  #   pod 'DashX/SDK', :git => 'https://github.com/dashxhq/dashx-ios.git', :tag => '1.4.0'
+  #   pod 'DashX/SDK', :git => 'https://github.com/dashxhq/dashx-ios.git', :tag => '1.5.0'
   # For local development:
   #   pod 'DashX', :path => '../dashx-ios'
   s.dependency "DashX/SDK"

@@ -144,8 +144,18 @@ export interface DashXInstance {
 
   /**
    * Unsubscribe the current device from push notifications.
+   *
+   * Resolves with `{ success: true }` when the backend found and updated a
+   * matching subscribed contact, or `{ success: false }` when no match was
+   * found (anonymous UID rotated since subscribe, FCM token is stale,
+   * contact already unsubscribed, or this device never subscribed in the
+   * current session). The device ends up unsubscribed in both cases; the
+   * boolean is useful for diagnostics and analytics.
+   *
+   * Rejects on transport / SDK-state failures: native module not configured,
+   * Firebase token-delete failure, GraphQL or network error.
    */
-  unsubscribe(): void;
+  unsubscribe(): Promise<{ success: boolean }>;
 
   /**
    * Fetch stored notification preferences for the current user.
