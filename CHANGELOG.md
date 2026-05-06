@@ -10,7 +10,11 @@ All notable changes to `@dashx/react-native` are documented in this file. Format
 
 ### Added
 
-- **`DashX.requestNotificationPermission({ fallbackToSettings })`.** Optional flag, default `false`. When `true` and the user has already granted or denied permission, opens the app's notification settings page (since iOS no-ops `requestAuthorization` in that state). Use this to route users who granted permission under an older dashx-ios to enable the Time Sensitive toggle manually — iOS won't add new authorization options to an existing grant, so existing users need to flip it themselves. Existing call sites compile unchanged.
+- **`DashX.requestNotificationPermission({ fallbackToSettings })`.** Optional flag, default `false`. When `true`, the SDK detects platform-specific dead-ends and opens the system notification-settings page instead of firing a futile prompt:
+  - **iOS** — already granted or denied (iOS no-ops `requestAuthorization` in that state). Use this to route users who granted permission under an older dashx-ios to enable the Time Sensitive toggle manually.
+  - **Android** — `POST_NOTIFICATIONS` permanently denied (Android 13+, two-strikes rule). `requestPermissions()` auto-resolves DENIED without UI in that state.
+
+  Existing call sites compile unchanged.
 
 ### Fixed
 

@@ -69,8 +69,8 @@ class DashXReactNativeModule(reactContext: ReactApplicationContext) :
 
     override fun fetchAsset(assetId: String, promise: Promise) = impl.fetchAsset(assetId, promise)
 
-    override fun requestNotificationPermission(promise: Promise) =
-        impl.requestNotificationPermission(promise)
+    override fun requestNotificationPermission(fallbackToSettings: Boolean, promise: Promise) =
+        impl.requestNotificationPermission(fallbackToSettings, promise)
 
     override fun getNotificationPermissionStatus(promise: Promise) =
         impl.getNotificationPermissionStatus(promise)
