@@ -4,17 +4,37 @@ All notable changes to `@dashx/react-native` are documented in this file. Format
 
 ## [1.4.1] — 2026-05-06
 
-### Changed
+### Required upgrade steps
 
-- **`pod 'DashX/SDK'` floor bumped to `>= 1.5.1`.** Earlier dashx-ios versions either fall back to silent-push on the backend (pre-1.3.0, throttled by iOS) or omit `.timeSensitive` from the authorization request (pre-1.5.1, causing `interruption-level: time-sensitive` payloads to silently downgrade and stay filterable by Focus / Reduce Interruptions / Scheduled Summary on iOS 18 / 26). Bump `pod 'DashX/SDK', :tag => '1.5.1'` in your Podfile.
+1. **Bump the dashx-ios pod tag to 1.5.1 in your `ios/Podfile`** — `pod install` will refuse the upgrade otherwise (the podspec floor is now `>= 1.5.1`):
+
+   ```ruby
+   pod 'DashX/SDK', :git => 'https://github.com/dashxhq/dashx-ios.git', :tag => '1.5.1'
+   ```
+
+   The floor is required because earlier dashx-ios versions either fall back to silent-push on the backend (pre-1.3.0, throttled by iOS) or omit `.timeSensitive` from the authorization request (pre-1.5.1, causing `interruption-level: time-sensitive` payloads to silently downgrade and stay filterable by Focus / Reduce Interruptions / Scheduled Summary on iOS 18 / 26).
+
+2. **Wire `fallbackToSettings: true` somewhere in your permission UI** to recover existing iOS users — fresh installs are auto-fixed by the upgrade, but users who already granted notification permission under the old SDK keep an `.authorized` state without the time-sensitive entitlement, and Apple's `requestAuthorization` is a one-shot grant that can't be silently upgraded. They have to flip the **Time Sensitive Notifications** toggle in iOS Settings themselves.
+
+   ```js
+   // From a "Notifications acting up?" affordance, or as a one-time
+   // post-upgrade prompt:
+   await DashX.requestNotificationPermission({ fallbackToSettings: true });
+   ```
+
+   When the user is already determined (granted or denied on iOS / permanently denied on Android), this opens the system notification settings page instead of firing a futile `requestAuthorization`. Without this step, your existing iOS users will keep experiencing the original "intermittent / second attempt works" symptom even after upgrading to 1.4.1.
+
+### Migration
+
+- **Consumers who subclass `DashXReactNativeModuleImpl`** and override `requestNotificationPermission(promise:)` need to update the override signature to `requestNotificationPermission(fallbackToSettings: Boolean, promise: Promise)`. Otherwise Kotlin's override resolution silently drops to the impl's version and your custom logic stops running. Same applies to anyone subclassing the new-arch / old-arch `DashXReactNativeModule` wrappers. Most consumers don't subclass these — flagged here for the few that do.
 
 ### Added
 
 - **`DashX.requestNotificationPermission({ fallbackToSettings })`.** Optional flag, default `false`. When `true`, the SDK detects platform-specific dead-ends and opens the system notification-settings page instead of firing a futile prompt:
-  - **iOS** — already granted or denied (iOS no-ops `requestAuthorization` in that state). Use this to route users who granted permission under an older dashx-ios to enable the Time Sensitive toggle manually.
+  - **iOS** — already granted or denied (iOS no-ops `requestAuthorization` in that state).
   - **Android** — `POST_NOTIFICATIONS` permanently denied (Android 13+, two-strikes rule). `requestPermissions()` auto-resolves DENIED without UI in that state.
 
-  Existing call sites compile unchanged.
+  Existing call sites (`DashX.requestNotificationPermission()` with no arguments) compile and behave unchanged.
 
 ### Fixed
 
