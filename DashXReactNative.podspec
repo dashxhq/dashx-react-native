@@ -21,10 +21,16 @@ Pod::Spec.new do |s|
   install_modules_dependencies(s)
 
   # DashX iOS SDK — consumers must provide the source in their Podfile:
-  #   pod 'DashX/SDK', :git => 'https://github.com/dashxhq/dashx-ios.git', :tag => '1.5.0'
+  #   pod 'DashX/SDK', :git => 'https://github.com/dashxhq/dashx-ios.git', :tag => '1.5.1'
   # For local development:
   #   pod 'DashX', :path => '../dashx-ios'
-  s.dependency "DashX/SDK"
+  #
+  # Floor of 1.5.1 — earlier versions either fall back to silent-push on the
+  # backend (pre-1.3.0, which iOS throttles aggressively) or omit the
+  # `.timeSensitive` authorization option (pre-1.5.1, which causes
+  # `interruption-level: time-sensitive` payloads to silently downgrade to
+  # `active` on iOS 18 / 26 and stay subject to Focus / Summary filtering).
+  s.dependency "DashX/SDK", ">= 1.5.1"
 
   # Hard dependency so that `canImport(FirebaseMessaging)`
   # evaluates at this pod's compile time, where consumer-Podfile pods aren't

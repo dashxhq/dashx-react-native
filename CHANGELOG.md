@@ -2,6 +2,21 @@
 
 All notable changes to `@dashx/react-native` are documented in this file. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions follow [SemVer](https://semver.org/).
 
+## [1.4.1] — 2026-05-06
+
+### Changed
+
+- **`pod 'DashX/SDK'` floor bumped to `>= 1.5.1`.** Earlier dashx-ios versions either fall back to silent-push on the backend (pre-1.3.0, throttled by iOS) or omit `.timeSensitive` from the authorization request (pre-1.5.1, causing `interruption-level: time-sensitive` payloads to silently downgrade and stay filterable by Focus / Reduce Interruptions / Scheduled Summary on iOS 18 / 26). Bump `pod 'DashX/SDK', :tag => '1.5.1'` in your Podfile.
+
+### Added
+
+- **`DashX.requestNotificationPermission({ fallbackToSettings })`.** Optional flag, default `false`. When `true` and the user has already granted or denied permission, opens the app's notification settings page (since iOS no-ops `requestAuthorization` in that state). Use this to route users who granted permission under an older dashx-ios to enable the Time Sensitive toggle manually — iOS won't add new authorization options to an existing grant, so existing users need to flip it themselves. Existing call sites compile unchanged.
+
+### Fixed
+
+- **Foreground push duplicate-display race in `DashXNotificationHandler.handleRemoteNotification`.** Now short-circuits when the payload already carries `aps.alert`, letting iOS render the notification natively via NSE / `willPresent` instead of racing a duplicate `UNUserNotificationCenter.add(...)` against it. Without the short-circuit the local re-add could clobber the NSE-attached image or briefly flicker on screen.
+- **Suspension race in the image-attached reconstruction path.** The `fetchCompletionHandler` now fires only after the async image download and the local `add()` both complete, with a 25-second budget under iOS's background-push limit. Previously the handler fired immediately while the download was still in flight, letting iOS suspend the process before the notification actually displayed.
+
 ## [1.4.0] — 2026-04-27
 
 ### Changed

@@ -32,7 +32,7 @@ export interface Spec extends TurboModule {
     action: Object | null,
     notificationId: string | null
   ): void;
-  requestNotificationPermission(): Promise<number>;
+  requestNotificationPermission(fallbackToSettings: boolean): Promise<number>;
   getNotificationPermissionStatus(): Promise<number>;
 
   addListener(eventName: string): void;

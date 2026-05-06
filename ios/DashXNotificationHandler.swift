@@ -39,6 +39,15 @@ public final class DashXNotificationHandler: NSObject {
             body: bridgeSafePayload(from: userInfo)
         )
 
+        // Alert pushes (aps.alert present) are displayed by iOS directly via
+        // the Notification Service Extension. Skipping the silent-push
+        // reconstruction prevents a duplicate `add()` from racing the
+        // system-displayed banner and clobbering its NSE-attached image.
+        if let aps = userInfo["aps"] as? [AnyHashable: Any], aps["alert"] != nil {
+            completionHandler(.newData)
+            return
+        }
+
         guard let dashxData = userInfo.dashxNotificationData() else {
             completionHandler(.noData)
             return
@@ -74,13 +83,42 @@ public final class DashXNotificationHandler: NSObject {
         )
         UNUserNotificationCenter.current().setNotificationCategories([category])
 
-        if let imagePath = dashxData.image, let imageURL = URL(string: imagePath) {
-            createNotificationWithImage(id: dashxData.id, imageURL: imageURL, content: content)
-        } else {
-            createNotification(id: dashxData.id, content: content)
+        // Defer the completion handler until after the local notification has
+        // actually been added. iOS suspends the process the moment we call
+        // `completionHandler`, so firing it before the async download + add
+        // chain finishes was dropping notifications mid-flight. The 25s budget
+        // sits comfortably under iOS's ~30s background-push limit.
+        let fire = makeOnceFire(completionHandler)
+        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(25)) {
+            fire(.newData)
         }
 
-        completionHandler(.newData)
+        if let imagePath = dashxData.image, let imageURL = URL(string: imagePath) {
+            createNotificationWithImage(id: dashxData.id, imageURL: imageURL, content: content) {
+                fire(.newData)
+            }
+        } else {
+            createNotification(id: dashxData.id, content: content) {
+                fire(.newData)
+            }
+        }
+    }
+
+    /// Wraps `completionHandler` so it can be invoked safely from any of the
+    /// (download done) / (add done) / (timeout) callbacks — second invocation
+    /// is a no-op.
+    private static func makeOnceFire(
+        _ completionHandler: @escaping (UIBackgroundFetchResult) -> Void
+    ) -> (UIBackgroundFetchResult) -> Void {
+        let lock = NSLock()
+        var fired = false
+        return { result in
+            lock.lock()
+            defer { lock.unlock() }
+            guard !fired else { return }
+            fired = true
+            completionHandler(result)
+        }
     }
 
     @objc
@@ -175,23 +213,29 @@ public final class DashXNotificationHandler: NSObject {
 
     // MARK: - Private Helpers
 
-    private static func createNotification(id: String, content: UNMutableNotificationContent) {
+    private static func createNotification(
+        id: String,
+        content: UNMutableNotificationContent,
+        completion: @escaping () -> Void
+    ) {
         let request = UNNotificationRequest(identifier: id, content: content, trigger: nil)
         UNUserNotificationCenter.current().add(request) { error in
             if let error = error {
                 DashXLog.d(tag: #function, "Failed to schedule notification: \(error.localizedDescription)")
             }
+            completion()
         }
     }
 
     private static func createNotificationWithImage(
         id: String,
         imageURL: URL,
-        content: UNMutableNotificationContent
+        content: UNMutableNotificationContent,
+        completion: @escaping () -> Void
     ) {
         let task = URLSession.shared.downloadTask(with: imageURL) { location, _, error in
             guard let location = location, error == nil else {
-                createNotification(id: id, content: content)
+                createNotification(id: id, content: content, completion: completion)
                 return
             }
 
@@ -206,10 +250,10 @@ public final class DashXNotificationHandler: NSObject {
                     options: nil
                 )
                 content.attachments = [attachment]
-                createNotification(id: id, content: content)
             } catch {
-                createNotification(id: id, content: content)
+                // fall through with no attachment
             }
+            createNotification(id: id, content: content, completion: completion)
         }
         task.resume()
     }
