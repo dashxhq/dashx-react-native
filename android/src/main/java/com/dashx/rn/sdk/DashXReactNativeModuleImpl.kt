@@ -5,8 +5,10 @@ import android.app.Activity
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.provider.Settings
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.dashx.rn.sdk.util.*
@@ -330,7 +332,7 @@ class DashXReactNativeModuleImpl(private val reactContext: ReactApplicationConte
         )
     }
 
-    fun requestNotificationPermission(promise: Promise) {
+    fun requestNotificationPermission(fallbackToSettings: Boolean, promise: Promise) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
             promise.resolve(PERMISSION_AUTHORIZED)
             return
@@ -345,14 +347,36 @@ class DashXReactNativeModuleImpl(private val reactContext: ReactApplicationConte
             return
         }
 
-        val activity = reactContext.currentActivity as? PermissionAwareActivity
+        val activity = reactContext.currentActivity
         if (activity == null) {
             promise.reject(E_UNSPECIFIED, "No current activity to request permission from")
             return
         }
 
-        reactContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .edit()
+        // "Permanently denied" detection on Android 13+: we asked at least
+        // once before AND the system says we shouldn't show a rationale.
+        // In that state `requestPermissions()` auto-resolves DENIED without
+        // any UI, so re-prompting is futile — Settings is the only path.
+        val prefs = reactContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val previouslyRequested = prefs.getBoolean(KEY_PERMISSION_REQUESTED, false)
+        val permanentlyDenied = previouslyRequested && !ActivityCompat.shouldShowRequestPermissionRationale(
+            activity,
+            Manifest.permission.POST_NOTIFICATIONS
+        )
+
+        if (fallbackToSettings && permanentlyDenied) {
+            openAppNotificationSettings()
+            promise.resolve(PERMISSION_DENIED)
+            return
+        }
+
+        val permAwareActivity = activity as? PermissionAwareActivity
+        if (permAwareActivity == null) {
+            promise.reject(E_UNSPECIFIED, "Activity does not support permission requests")
+            return
+        }
+
+        prefs.edit()
             .putBoolean(KEY_PERMISSION_REQUESTED, true)
             .apply()
 
@@ -363,11 +387,19 @@ class DashXReactNativeModuleImpl(private val reactContext: ReactApplicationConte
             true
         }
 
-        activity.requestPermissions(
+        permAwareActivity.requestPermissions(
             arrayOf(Manifest.permission.POST_NOTIFICATIONS),
             NOTIFICATION_PERMISSION_REQUEST_CODE,
             listener
         )
+    }
+
+    private fun openAppNotificationSettings() {
+        val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+            putExtra(Settings.EXTRA_APP_PACKAGE, reactContext.packageName)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        reactContext.startActivity(intent)
     }
 
     fun getNotificationPermissionStatus(promise: Promise) {

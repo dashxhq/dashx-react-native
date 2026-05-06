@@ -55,7 +55,7 @@ RCT_EXTERN_METHOD(processURL:(NSString *)url source:(NSString * _Nullable)source
 
 RCT_EXTERN_METHOD(trackNotificationNavigation:(NSDictionary * _Nullable)action notificationId:(NSString * _Nullable)notificationId);
 
-RCT_EXTERN_METHOD(requestNotificationPermission:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject);
+RCT_EXTERN_METHOD(requestNotificationPermission:(BOOL)fallbackToSettings resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject);
 
 RCT_EXTERN_METHOD(getNotificationPermissionStatus:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject);
 

@@ -218,8 +218,9 @@ const DashX = {
     );
   },
 
-  requestNotificationPermission() {
-    return getNativeDashX().requestNotificationPermission();
+  requestNotificationPermission(options) {
+    const fallbackToSettings = Boolean(options && options.fallbackToSettings);
+    return getNativeDashX().requestNotificationPermission(fallbackToSettings);
   },
 
   getNotificationPermissionStatus() {

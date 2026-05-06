@@ -235,9 +235,19 @@ export interface DashXInstance {
 
   /**
    * Request push notification permission from the user.
+   *
+   * @param options.fallbackToSettings — when `true`, if the user has previously
+   *   granted or denied permission, opens the system notification settings
+   *   page so they can enable Time Sensitive notifications (or re-enable
+   *   notifications). Defaults to `false`. Use this to recover users who
+   *   granted permission before the SDK started requesting `.timeSensitive`,
+   *   since iOS won't silently add new options to an existing grant.
+   *
    * Resolves with a NotificationPermissionStatus integer.
    */
-  requestNotificationPermission(): Promise<NotificationPermissionStatus>;
+  requestNotificationPermission(options?: {
+    fallbackToSettings?: boolean
+  }): Promise<NotificationPermissionStatus>;
 
   /**
    * Get the current push notification permission status without prompting.

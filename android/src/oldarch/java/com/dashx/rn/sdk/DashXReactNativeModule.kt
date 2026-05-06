@@ -87,8 +87,8 @@ class DashXReactNativeModule(reactContext: ReactApplicationContext) :
     fun fetchAsset(assetId: String, promise: Promise) = impl.fetchAsset(assetId, promise)
 
     @ReactMethod
-    fun requestNotificationPermission(promise: Promise) =
-        impl.requestNotificationPermission(promise)
+    fun requestNotificationPermission(fallbackToSettings: Boolean, promise: Promise) =
+        impl.requestNotificationPermission(fallbackToSettings, promise)
 
     @ReactMethod
     fun getNotificationPermissionStatus(promise: Promise) =

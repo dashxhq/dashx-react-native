@@ -232,9 +232,9 @@ class DashXReactNative: RCTEventEmitter {
         DashX.trackNotificationNavigation(navigationAction, notificationId: notificationId as String?)
     }
 
-    @objc(requestNotificationPermission:reject:)
-    func requestNotificationPermission(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
-        DashX.requestNotificationPermission { status in resolve(status.rawValue) }
+    @objc(requestNotificationPermission:resolve:reject:)
+    func requestNotificationPermission(_ fallbackToSettings: Bool, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        DashX.requestNotificationPermission(fallbackToSettings: fallbackToSettings) { status in resolve(status.rawValue) }
     }
 
     @objc(getNotificationPermissionStatus:reject:)
