@@ -13,6 +13,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.dashx.rn.sdk.util.*
 import com.dashx.android.DashX
+import com.dashx.android.DashXActivityLifecycleCallbacks
 import com.dashx.android.DashXLog
 import com.dashx.android.DashXLog.LogLevel
 import com.dashx.android.data.Asset
@@ -277,11 +278,15 @@ class DashXReactNativeModuleImpl(private val reactContext: ReactApplicationConte
         )
     }
 
-    // --- iOS-only methods: no-op stubs on Android (JS guards prevent these from being called) ---
-
     fun enableLifecycleTracking() {
-        // iOS-only; no-op on Android
+        // The SDK's tracking flags are unsynchronized statics read on the main thread.
+        val application = reactContext.applicationContext
+        UiThreadUtil.runOnUiThread {
+            DashXActivityLifecycleCallbacks.enableActivityLifecycleTracking(application)
+        }
     }
+
+    // --- iOS-only methods: no-op stubs on Android (JS guards prevent these from being called) ---
 
     fun enableAdTracking() {
         // iOS-only; no-op on Android

@@ -46,6 +46,41 @@ yarn add @dashx/react-native
 
 For detailed documentation, visit [React Native SDK documentation](https://docs.dashx.com/sdks/client-side/react-native-sdk).
 
+## Automatic events
+
+Automatic events use a `$` prefix, matching `@dashx/browser`.
+
+### App lifecycle
+
+On iOS and Android, call `enableLifecycleTracking()` after `configure` to send app install, update, open and background events:
+
+```js
+DashX.configure({ publicKey: 'YOUR_PUBLIC_KEY' });
+DashX.enableLifecycleTracking();
+```
+
+### Screen views with React Navigation
+
+React Native screens are routes rather than native screens, so track them from the navigation container. `trackNavigation` sends `DashX.screen(route.name)` for the first route and then whenever the focused route's name changes. Route params are not sent. Call it from `onReady` so the first screen is captured; it returns a function that stops tracking.
+
+```jsx
+import { NavigationContainer, useNavigationContainerRef } from '@react-navigation/native';
+import DashX from '@dashx/react-native';
+
+export default function App() {
+  const navigationRef = useNavigationContainerRef();
+
+  return (
+    <NavigationContainer
+      ref={navigationRef}
+      onReady={() => DashX.trackNavigation(navigationRef)}
+    >
+      {/* ... */}
+    </NavigationContainer>
+  );
+}
+```
+
 ## Deep linking and push navigation
 
 See the [Deep Linking & Push Navigation](https://docs.dashx.com/apps/messaging/deep-linking) guide for setup instructions, payload fields, and code examples.

@@ -184,8 +184,61 @@ const DashX = {
   },
 
   enableLifecycleTracking() {
-    if (Platform.OS !== 'ios') return;
     return getNativeDashX().enableLifecycleTracking();
+  },
+
+  trackNavigation(navigationRef) {
+    if (!navigationRef || typeof navigationRef !== 'object') {
+      throw new Error(
+        'DashX.trackNavigation: navigationRef must be a NavigationContainer ref'
+      );
+    }
+
+    // A ref from createNavigationContainerRef / useNavigationContainerRef
+    // queues listeners until the container mounts; a plain useRef does not.
+    const navigation =
+      typeof navigationRef.addListener === 'function'
+        ? navigationRef
+        : navigationRef.current;
+
+    if (!navigation) {
+      console.warn(
+        'DashX.trackNavigation: navigationRef.current is null. Call it from NavigationContainer onReady, or pass a ref from useNavigationContainerRef().'
+      );
+      return () => {};
+    }
+    if (
+      typeof navigation.addListener !== 'function' ||
+      typeof navigation.getCurrentRoute !== 'function'
+    ) {
+      throw new Error(
+        'DashX.trackNavigation: navigationRef must be a NavigationContainer ref'
+      );
+    }
+
+    let lastRouteName = null;
+    let active = true;
+
+    const trackCurrentRoute = () => {
+      if (!active) return;
+      // getCurrentRoute() logs an error on a container ref that is not ready.
+      if (typeof navigation.isReady === 'function' && !navigation.isReady()) {
+        return;
+      }
+      const route = navigation.getCurrentRoute();
+      const routeName = route && route.name;
+      if (!routeName || routeName === lastRouteName) return;
+      lastRouteName = routeName;
+      DashX.screen(routeName);
+    };
+
+    const removeListener = navigation.addListener('state', trackCurrentRoute);
+    trackCurrentRoute();
+
+    return () => {
+      active = false;
+      if (typeof removeListener === 'function') removeListener();
+    };
   },
 
   enableAdTracking() {

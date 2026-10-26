@@ -579,3 +579,124 @@ describe('onLinkReceived', () => {
     expect(subscription).toBeDefined();
   });
 });
+
+// --- enableLifecycleTracking ---
+
+describe('enableLifecycleTracking', () => {
+  it.each(['ios', 'android'])('calls native on %s', (os) => {
+    const { Platform } = require('react-native');
+    Platform.OS = os;
+    DashX.enableLifecycleTracking();
+    expect(mockNativeModule.enableLifecycleTracking).toHaveBeenCalledTimes(1);
+    Platform.OS = 'ios';
+  });
+});
+
+// --- trackNavigation ---
+
+function createNavigationRef({ ready = true, routeName = 'Home' } = {}) {
+  const listeners = [];
+  const ref = {
+    ready,
+    route: routeName ? { name: routeName } : undefined,
+    addListener: jest.fn((event, callback) => {
+      listeners.push({ event, callback });
+      return jest.fn(() => {
+        const index = listeners.findIndex((l) => l.callback === callback);
+        if (index !== -1) listeners.splice(index, 1);
+      });
+    }),
+    getCurrentRoute: jest.fn(() => ref.route),
+    isReady: jest.fn(() => ref.ready),
+    navigate(name, params) {
+      ref.route = { name, params };
+      ref.emitState();
+    },
+    emitState() {
+      listeners
+        .filter((l) => l.event === 'state')
+        .forEach((l) => l.callback({ data: { state: {} } }));
+    },
+  };
+  return ref;
+}
+
+describe('trackNavigation', () => {
+  it('sends the current route once when the ref is ready', () => {
+    const ref = createNavigationRef();
+    DashX.trackNavigation(ref);
+    expect(mockNativeModule.screen).toHaveBeenCalledTimes(1);
+    expect(mockNativeModule.screen).toHaveBeenCalledWith('Home', null);
+    expect(ref.addListener).toHaveBeenCalledWith('state', expect.any(Function));
+  });
+
+  it('waits for readiness before sending the first screen', () => {
+    const ref = createNavigationRef({ ready: false });
+    DashX.trackNavigation(ref);
+    expect(ref.getCurrentRoute).not.toHaveBeenCalled();
+    expect(mockNativeModule.screen).not.toHaveBeenCalled();
+
+    ref.ready = true;
+    ref.emitState();
+    expect(mockNativeModule.screen).toHaveBeenCalledTimes(1);
+    expect(mockNativeModule.screen).toHaveBeenCalledWith('Home', null);
+  });
+
+  it('does not resend when the route name is unchanged', () => {
+    const ref = createNavigationRef();
+    DashX.trackNavigation(ref);
+    ref.emitState();
+    ref.navigate('Home', { tab: 'feed' });
+    expect(mockNativeModule.screen).toHaveBeenCalledTimes(1);
+  });
+
+  it('sends the new route name on a route change, without params', () => {
+    const ref = createNavigationRef();
+    DashX.trackNavigation(ref);
+    ref.navigate('Profile', { userId: 'u_1' });
+    ref.navigate('Home');
+    expect(mockNativeModule.screen.mock.calls).toEqual([
+      ['Home', null],
+      ['Profile', null],
+      ['Home', null],
+    ]);
+  });
+
+  it('stops sending after unsubscribe', () => {
+    const ref = createNavigationRef();
+    const stop = DashX.trackNavigation(ref);
+    stop();
+    ref.navigate('Profile');
+    expect(mockNativeModule.screen).toHaveBeenCalledTimes(1);
+  });
+
+  it('resolves a plain React ref through current', () => {
+    const navigation = createNavigationRef();
+    DashX.trackNavigation({ current: navigation });
+    navigation.navigate('Profile');
+    expect(mockNativeModule.screen.mock.calls).toEqual([
+      ['Home', null],
+      ['Profile', null],
+    ]);
+  });
+
+  it('warns and returns a no-op when a plain ref has a null current', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const stop = DashX.trackNavigation({ current: null });
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('navigationRef.current is null')
+    );
+    expect(() => stop()).not.toThrow();
+    expect(mockNativeModule.screen).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('throws on a value that is not a navigation ref', () => {
+    expect(() => DashX.trackNavigation(null)).toThrow(
+      'navigationRef must be a NavigationContainer ref'
+    );
+    expect(() => DashX.trackNavigation({ current: {} })).toThrow(
+      'navigationRef must be a NavigationContainer ref'
+    );
+  });
+});
