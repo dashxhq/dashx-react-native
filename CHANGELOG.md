@@ -4,25 +4,10 @@ All notable changes to `@dashx/react-native` are documented in this file. Format
 
 ## [Unreleased]
 
-### Changed
-
-- **Automatic event names follow the `$` convention** used by `@dashx/browser` (`$pageview`, `$autocapture`) once this package is bumped to the dashx-ios / dashx-android releases that rename them. The names are emitted by the native SDKs, so nothing changes until the native pins move. Data keys become camelCase. Update any dashboards, flows or filters that match the old names:
-
-  | Old name | New name |
-  |---|---|
-  | `Screen Viewed` | `$screen` (data `name` plus caller data) |
-  | `Application Installed` | `$app_installed` |
-  | `Application Updated` | `$app_updated` |
-  | `Application Opened` | `$app_opened` (`fromBackground`, was `from_background`) |
-  | `Application Backgrounded` | `$app_backgrounded` (`durationMs`, was `session_length` in seconds) |
-  | `Application Crashed` | `$app_crashed` |
-  | `dx_deep_link_opened` | `$deep_link_opened` |
-  | `dx_notification_navigated` | `$notification_navigated` |
-
 ### Added
 
 - **`DashX.enableLifecycleTracking()` on Android.** Previously iOS only (a no-op on Android). It now registers the dashx-android activity lifecycle callbacks with the application context. Call it after `configure`. The pinned dashx-android 1.2.8 sends open and background events on every Activity change, including system dialogs such as the notification permission prompt; release this together with the dashx-android bump that makes them app-level.
-- **`DashX.trackNavigation(navigationRef)`** for React Navigation. Sends a screen view for the current route once the `NavigationContainer` is ready, then one per change of the focused route's name, and returns a function that stops tracking. Route params are not sent. Works with any React Navigation version through its container ref, without a dependency on `@react-navigation/*`. Prefer it over native screen tracking: React Native screens are routes, not native view controllers or activities.
+- **`DashX.trackNavigation(navigationRef)`** for React Navigation. Sends a screen view for the current route once the `NavigationContainer` is ready, then one per change of the focused route's name, and returns a function that stops tracking. Screen views go through `DashX.screen`, which the native SDKs record as `Screen Viewed` with the route name in `name`. Route params are not sent. Works with any React Navigation version through its container ref, without a dependency on `@react-navigation/*`. Prefer it over native screen tracking: React Native screens are routes, not native view controllers or activities.
 
 ## [1.4.1] — 2026-05-06
 

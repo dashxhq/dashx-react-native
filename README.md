@@ -48,11 +48,14 @@ For detailed documentation, visit [React Native SDK documentation](https://docs.
 
 ## Automatic events
 
-Automatic events use a `$` prefix, matching `@dashx/browser`.
-
 ### App lifecycle
 
-On iOS and Android, call `enableLifecycleTracking()` after `configure` to send app install, update, open and background events:
+On iOS and Android, call `enableLifecycleTracking()` after `configure` to send these events:
+
+- `Application Installed` and `Application Updated` on the first launch of a new install or build
+- `Application Opened` on launch and when returning to the foreground (`from_background`)
+- `Application Backgrounded` when the app leaves the foreground (`session_length`, in seconds)
+- `Application Crashed` on an uncaught native exception (iOS only)
 
 ```js
 DashX.configure({ publicKey: 'YOUR_PUBLIC_KEY' });
@@ -61,7 +64,7 @@ DashX.enableLifecycleTracking();
 
 ### Screen views with React Navigation
 
-React Native screens are routes rather than native screens, so track them from the navigation container. `trackNavigation` sends `DashX.screen(route.name)` for the first route and then whenever the focused route's name changes. Route params are not sent. Call it from `onReady` so the first screen is captured; it returns a function that stops tracking.
+React Native screens are routes rather than native screens, so track them from the navigation container. `trackNavigation` sends `DashX.screen(route.name)`, recorded as `Screen Viewed` with the route name in `name`, for the first route and then whenever the focused route's name changes. Route params are not sent. Call it from `onReady` so the first screen is captured; it returns a function that stops tracking.
 
 ```jsx
 import { NavigationContainer, useNavigationContainerRef } from '@react-navigation/native';
