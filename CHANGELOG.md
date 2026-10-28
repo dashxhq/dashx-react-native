@@ -8,8 +8,8 @@ All notable changes to `@dashx/react-native` are documented in this file. Format
 
 Remove this section once these are done; this release must not ship without them.
 
-1. **Bump `com.dashx:dashx-android` in `android/build.gradle`** from 1.2.8 to the dashx-android release that makes lifecycle events app-level and records screen views as `$screen` with `$screen_name`. With 1.2.8, `enableLifecycleTracking()` sends `Application Backgrounded` and `Application Opened` on every Activity change.
-2. **Raise the `DashX/SDK` floor in `DashXReactNative.podspec`** from `>= 1.5.1` to `>= 1.6.0`, the dashx-ios release that records screen views as `$screen` with `$screen_name`, Update the example pod tag in the podspec comment to match, and add a "Required upgrade steps" entry telling consumers to bump the dashx-ios tag in their `ios/Podfile`, as in 1.4.1.
+1. **Bump `com.dashx:dashx-android` in `android/build.gradle`** from 1.2.8 to 1.5.0, the dashx-android release that makes lifecycle events app-level, records screen views as `$screen` with `$screen_name` and renames `dx_deep_link_opened` and `dx_notification_navigated` to `Deep Link Opened` and `Push Notification Tapped`. With 1.2.8, `enableLifecycleTracking()` sends `Application Backgrounded` and `Application Opened` on every Activity change.
+2. **Raise the `DashX/SDK` floor in `DashXReactNative.podspec`** from `>= 1.5.1` to `>= 1.6.1`, the dashx-ios release that has the same event names as dashx-android 1.5.0, Update the example pod tag in the podspec comment to match, and add a "Required upgrade steps" entry telling consumers to bump the dashx-ios tag in their `ios/Podfile`, as in 1.4.1.
 
 ### Added
 
