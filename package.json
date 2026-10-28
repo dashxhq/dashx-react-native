@@ -6,6 +6,13 @@
   "main": "index.js",
   "types": "index.d.ts",
   "files": [
+    "android",
+    "DashXReactNative.podspec",
+    "index.js",
+    "index.d.ts",
+    "ios",
+    "src",
+    "README.md",
     "!**/__fixtures__",
     "!**/__mocks__",
     "!**/__tests__",
@@ -15,15 +22,8 @@
     "!android/gradlew.bat",
     "!android/gradlew",
     "!android/local.properties",
-    "!ios/build",
-    "*.podspec",
-    "android",
-    "DashXReactNative.podspec",
-    "index.js",
-    "index.d.ts",
-    "ios",
-    "src",
-    "README.md"
+    "!android/src/test",
+    "!ios/build"
   ],
   "codegenConfig": {
     "name": "RNDashXReactNativeSpec",
@@ -37,7 +37,9 @@
     "test": "jest",
     "lint": "eslint index.js && yarn run check-bridge-shim",
     "sync-bridge-shim": "node scripts/generate-bridge-shim.js",
-    "check-bridge-shim": "node scripts/generate-bridge-shim.js && git diff --exit-code ios/DashXReactNative.mm"
+    "check-bridge-shim": "node scripts/generate-bridge-shim.js && git diff --exit-code ios/DashXReactNative.mm",
+    "check-package": "node scripts/check-package.js",
+    "prepublishOnly": "node scripts/check-package.js"
   },
   "repository": {
     "type": "git",

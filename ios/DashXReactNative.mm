@@ -21,17 +21,17 @@ RCT_EXTERN_METHOD(configure:(NSDictionary *)options);
 
 RCT_EXTERN_METHOD(identify:(NSDictionary *)options);
 
-RCT_EXTERN_METHOD(setIdentity:(NSString * _Nullable)uid token:(NSString * _Nullable)token);
+RCT_EXTERN_METHOD(setIdentity:(id _Nullable)uid token:(id _Nullable)token);
 
 RCT_EXTERN_METHOD(reset);
 
-RCT_EXTERN_METHOD(track:(NSString *)event data:(NSDictionary * _Nullable)data);
+RCT_EXTERN_METHOD(track:(NSString *)event data:(id _Nullable)data);
 
-RCT_EXTERN_METHOD(screen:(NSString *)screenName data:(NSDictionary * _Nullable)data);
+RCT_EXTERN_METHOD(screen:(NSString *)screenName data:(id _Nullable)data);
 
-RCT_EXTERN_METHOD(fetchRecord:(NSString *)urn options:(NSDictionary * _Nullable)options resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject);
+RCT_EXTERN_METHOD(fetchRecord:(NSString *)urn options:(id _Nullable)options resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject);
 
-RCT_EXTERN_METHOD(searchRecords:(NSString *)resource options:(NSDictionary * _Nullable)options resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject);
+RCT_EXTERN_METHOD(searchRecords:(NSString *)resource options:(id _Nullable)options resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject);
 
 RCT_EXTERN_METHOD(fetchStoredPreferences:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject);
 
@@ -51,9 +51,9 @@ RCT_EXTERN_METHOD(enableLifecycleTracking);
 
 RCT_EXTERN_METHOD(enableAdTracking);
 
-RCT_EXTERN_METHOD(processURL:(NSString *)url source:(NSString * _Nullable)source forwardToLinkHandler:(BOOL)forwardToLinkHandler);
+RCT_EXTERN_METHOD(processURL:(NSString *)url source:(id _Nullable)source forwardToLinkHandler:(BOOL)forwardToLinkHandler);
 
-RCT_EXTERN_METHOD(trackNotificationNavigation:(NSDictionary * _Nullable)action notificationId:(NSString * _Nullable)notificationId);
+RCT_EXTERN_METHOD(trackNotificationNavigation:(id _Nullable)action notificationId:(id _Nullable)notificationId);
 
 RCT_EXTERN_METHOD(requestNotificationPermission:(BOOL)fallbackToSettings resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject);
 
