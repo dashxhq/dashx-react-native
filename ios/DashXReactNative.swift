@@ -40,11 +40,8 @@ class DashXReactNative: RCTEventEmitter {
         try? DashX.identify(options: stringOptions)
     }
 
-    // Arguments JS may pass as null are typed `Any?` (ObjC `id`) instead of
-    // `NSDictionary?`/`NSString?`. React Native's new-arch interop layer runs
-    // typed object arguments through RCTConvert, which logs a "JSON value
-    // '<null>' of type NSNull cannot be converted" error in debug builds for
-    // every null. `id` arguments skip that conversion; cast them here instead.
+    // Nullable args are `id`: the new-arch interop runs typed ones through
+    // RCTConvert, which logs an NSNull conversion error for every null.
     @objc(setIdentity:token:)
     func setIdentity(_ uid: Any?, _ token: Any?) {
         DashX.setIdentity(uid: uid as? String, token: token as? String)

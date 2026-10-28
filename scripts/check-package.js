@@ -1,21 +1,6 @@
 #!/usr/bin/env node
 /* eslint-disable no-console */
-//
-// check-package.js — fail if the npm tarball would contain anything outside
-// the SDK's own sources.
-//
-// Why this exists:
-//
-// `yarn publish` (Yarn 1) ignores the `!` negations in package.json `files`
-// and matches entries like `ios` and `*.podspec` at any depth. Published from
-// a checkout that has `.claude/worktrees/` or Gradle build output in it, 1.5.0
-// shipped ~190 stray files that way. npm applies `files` correctly, so:
-//
-//   - As `prepublishOnly`, this refuses to run under `yarn publish`.
-//   - Every run packs with npm (dry run) and checks each path against the
-//     allowlist below. CI runs it too, so a bad `files` change fails the PR.
-//
-// Usage: `yarn check-package`
+// Fails if the npm tarball would ship anything outside the SDK sources.
 
 const { execFileSync } = require('child_process')
 const path = require('path')
