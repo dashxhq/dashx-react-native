@@ -85,6 +85,21 @@ export interface ProcessURLOptions {
   forwardToLinkHandler?: boolean;
 }
 
+export interface NavigationRouteLike {
+  name: string;
+  params?: object;
+}
+
+/**
+ * The subset of a React Navigation `NavigationContainer` ref used by
+ * `trackNavigation`, so this package does not depend on `@react-navigation/*`.
+ */
+export interface NavigationContainerLike {
+  addListener(event: 'state', callback: (event: unknown) => void): () => void;
+  getCurrentRoute(): NavigationRouteLike | undefined;
+  isReady?(): boolean;
+}
+
 export interface DashXInstance {
   /**
    * Initialize the SDK with your public key and optional configuration.
@@ -206,9 +221,37 @@ export interface DashXInstance {
   fetchAsset(assetId: string): Promise<AssetResponse>;
 
   /**
-   * Enable automatic app lifecycle event tracking (iOS only).
+   * Enable automatic app lifecycle events (install, update, open, background)
+   * on iOS and Android. Call after `configure`.
    */
   enableLifecycleTracking(): void;
+
+  /**
+   * Send a screen view for each React Navigation route change. Sends the
+   * current route once the container is ready, then `screen(route.name)`
+   * whenever the focused route's name changes (params are not sent).
+   * Returns a function that stops tracking.
+   *
+   * Call it from `NavigationContainer`'s `onReady` so the first screen is
+   * captured. A ref from `useNavigationContainerRef()` or
+   * `createNavigationContainerRef()` may also be passed before the container
+   * mounts.
+   *
+   * @example
+   * const navigationRef = useNavigationContainerRef();
+   *
+   * <NavigationContainer
+   *   ref={navigationRef}
+   *   onReady={() => DashX.trackNavigation(navigationRef)}
+   * >
+   *   ...
+   * </NavigationContainer>
+   */
+  trackNavigation(
+    navigationRef:
+      | NavigationContainerLike
+      | { current: NavigationContainerLike | null }
+  ): () => void;
 
   /**
    * Enable IDFA/ATT ad tracking and request the App Tracking Transparency permission (iOS only).

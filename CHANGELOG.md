@@ -2,6 +2,25 @@
 
 All notable changes to `@dashx/react-native` are documented in this file. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions follow [SemVer](https://semver.org/).
 
+## [1.5.0] — 2026-10-28
+
+### Required upgrade steps
+
+1. **Bump the dashx-ios pod tag to 1.6.1 in your `ios/Podfile`**. `pod install` refuses the upgrade otherwise, because the podspec floor is now `>= 1.6.1`:
+
+   ```ruby
+   pod 'DashX/SDK', :git => 'https://github.com/dashxhq/dashx-ios.git', :tag => '1.6.1'
+   ```
+
+### Breaking
+
+- **Automatic events are renamed by the native SDKs**, now dashx-ios 1.6.1 and dashx-android 1.5.0. Screen views are `$screen` with the screen name in `$screen_name` (was `Screen Viewed` with `name`), `dx_deep_link_opened` is `Deep Link Opened` and `dx_notification_navigated` is `Push Notification Tapped`, with their data unchanged. Reports, flows or filters on the old names or the `name` key need updating. Lifecycle event names and keys are unchanged.
+
+### Added
+
+- **`DashX.enableLifecycleTracking()` on Android.** Previously iOS only (a no-op on Android). It now registers the dashx-android activity lifecycle callbacks with the application context. Call it after `configure`. With dashx-android 1.5.0 these are app-level: one launch event per cold start, `Application Opened` with `from_background` on return and `Application Backgrounded` on leaving, not one per Activity change.
+- **`DashX.trackNavigation(navigationRef)`** for React Navigation. Sends a screen view for the current route once the `NavigationContainer` is ready, then one per change of the focused route's name, and returns a function that stops tracking. Screen views go through `DashX.screen`, which the native SDKs record as `$screen` with the route name in `$screen_name`. Route params are not sent. Works with any React Navigation version through its container ref, without a dependency on `@react-navigation/*`. Prefer it over native screen tracking: React Native screens are routes, not native view controllers or activities.
+
 ## [1.4.1] — 2026-05-06
 
 ### Required upgrade steps
