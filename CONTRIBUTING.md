@@ -182,9 +182,13 @@ Tests mock the React Native native modules and verify the JS bridge layer: input
 
 ## Publishing
 
-Use `yarn publish` to bump the version and release to npm:
+Bump the version with `yarn version`, then publish with **`npm publish`**, not `yarn publish`:
 
 ```sh
-yarn publish
-git push origin main
+yarn version --new-version <x.y.z>   # on develop; commits and tags v<x.y.z>
+# merge develop into main, then from an up-to-date main:
+npm publish
+git push origin v<x.y.z>
 ```
+
+`yarn publish` (Yarn 1) ignores the `!` exclusions in `files` and packs stray files, such as `.claude/worktrees/` copies or Gradle output. The `prepublishOnly` script (`scripts/check-package.js`) refuses to run under `yarn publish`, and fails if the tarball would contain anything outside the SDK sources. Run `yarn check-package` to check it beforehand.
