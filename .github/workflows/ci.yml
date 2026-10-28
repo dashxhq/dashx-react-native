@@ -27,6 +27,9 @@ jobs:
       - name: Test
         run: yarn test
 
+      - name: Check package contents
+        run: yarn check-package
+
   # Android JVM unit tests for the bridge (see android/src/test). Runs
   # standalone via the minimal `android/settings.gradle` + buildscript block
   # added for this purpose — no consumer app checkout required. Scoped to

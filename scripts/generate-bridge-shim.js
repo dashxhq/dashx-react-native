@@ -53,6 +53,8 @@ const SWIFT_TO_OBJC = {
   'NSString?': 'NSString * _Nullable',
   'NSDictionary': 'NSDictionary *',
   'NSDictionary?': 'NSDictionary * _Nullable',
+  // For arguments JS may pass as null; see the note in DashXReactNative.swift.
+  'Any?': 'id _Nullable',
   'Bool': 'BOOL',
   'Double': 'double',
   '@escaping RCTPromiseResolveBlock': 'RCTPromiseResolveBlock',

@@ -2,6 +2,13 @@
 
 All notable changes to `@dashx/react-native` are documented in this file. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions follow [SemVer](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+
+- **iOS: no more "JSON value '<null>' of type NSNull cannot be converted" errors in debug builds.** Under the new architecture, React Native logged one for every `null` argument passed to the native module. That included `screen()` and `track()` without data, so each `trackNavigation` screen view, and `setIdentity(null, …)`. Nullable arguments are now typed `id` on the native side. Events were always sent correctly; only the log noise is gone.
+- **npm package contains only the SDK sources.** 1.5.0 was published with `yarn publish`, which ignores the `!` exclusions in `files` and shipped about 190 stray files. Publishing now goes through `npm publish`, guarded by `scripts/check-package.js`. The Gradle wrapper and Android unit tests are no longer in the package either.
+
 ## [1.5.0] — 2026-10-28
 
 ### Required upgrade steps

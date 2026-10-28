@@ -40,9 +40,14 @@ class DashXReactNative: RCTEventEmitter {
         try? DashX.identify(options: stringOptions)
     }
 
+    // Arguments JS may pass as null are typed `Any?` (ObjC `id`) instead of
+    // `NSDictionary?`/`NSString?`. React Native's new-arch interop layer runs
+    // typed object arguments through RCTConvert, which logs a "JSON value
+    // '<null>' of type NSNull cannot be converted" error in debug builds for
+    // every null. `id` arguments skip that conversion; cast them here instead.
     @objc(setIdentity:token:)
-    func setIdentity(_ uid: NSString?, _ token: NSString?) {
-        DashX.setIdentity(uid: uid as String?, token: token as String?)
+    func setIdentity(_ uid: Any?, _ token: Any?) {
+        DashX.setIdentity(uid: uid as? String, token: token as? String)
     }
 
     @objc
@@ -51,17 +56,18 @@ class DashXReactNative: RCTEventEmitter {
     }
 
     @objc(track:data:)
-    func track(_ event: String, _ data: NSDictionary?) {
+    func track(_ event: String, _ data: Any?) {
         DashX.track(event, withData: data as? [String: Any])
     }
 
     @objc(screen:data:)
-    func screen(_ screenName: String, _ data: NSDictionary?) {
+    func screen(_ screenName: String, _ data: Any?) {
         DashX.screen(screenName, withData: data as? [String: Any])
     }
 
     @objc(fetchRecord:options:resolve:reject:)
-    func fetchRecord(_ urn: String, options: NSDictionary?, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+    func fetchRecord(_ urn: String, options: Any?, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        let options = options as? NSDictionary
         DashXClient.instance.fetchRecord(
             urn: urn,
             preview: options?["preview"] as? Bool,
@@ -78,7 +84,8 @@ class DashXReactNative: RCTEventEmitter {
     }
 
     @objc(searchRecords:options:resolve:reject:)
-    func searchRecords(_ resource: String, options: NSDictionary?, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+    func searchRecords(_ resource: String, options: Any?, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        let options = options as? NSDictionary
         DashXClient.instance.searchRecords(
             resource: resource,
             filter: options?["filter"] as? [String: Any],
@@ -199,15 +206,15 @@ class DashXReactNative: RCTEventEmitter {
     }
 
     @objc(processURL:source:forwardToLinkHandler:)
-    func processURL(_ url: String, source: NSString?, forwardToLinkHandler: Bool) {
+    func processURL(_ url: String, source: Any?, forwardToLinkHandler: Bool) {
         guard let parsedURL = URL(string: url) else { return }
-        DashX.processURL(parsedURL, source: source as String?, forwardToLinkHandler: forwardToLinkHandler)
+        DashX.processURL(parsedURL, source: source as? String, forwardToLinkHandler: forwardToLinkHandler)
     }
 
     @objc(trackNotificationNavigation:notificationId:)
-    func trackNotificationNavigation(_ action: NSDictionary?, notificationId: NSString?) {
+    func trackNotificationNavigation(_ action: Any?, notificationId: Any?) {
         var navigationAction: NavigationAction? = nil
-        if let action = action, let type = action["type"] as? String {
+        if let action = action as? NSDictionary, let type = action["type"] as? String {
             switch type {
             case "deepLink":
                 if let urlString = action["url"] as? String, let url = URL(string: urlString) {
@@ -229,7 +236,7 @@ class DashXReactNative: RCTEventEmitter {
                 break
             }
         }
-        DashX.trackNotificationNavigation(navigationAction, notificationId: notificationId as String?)
+        DashX.trackNotificationNavigation(navigationAction, notificationId: notificationId as? String)
     }
 
     @objc(requestNotificationPermission:resolve:reject:)
