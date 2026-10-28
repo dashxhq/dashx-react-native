@@ -4,6 +4,13 @@ All notable changes to `@dashx/react-native` are documented in this file. Format
 
 ## [Unreleased]
 
+### Release checklist
+
+Remove this section once these are done; this release must not ship without them.
+
+1. **Bump `com.dashx:dashx-android` in `android/build.gradle`** from 1.2.8 to the dashx-android release that makes lifecycle events app-level and records screen views as `$screen` with `$screen_name`. With 1.2.8, `enableLifecycleTracking()` sends `Application Backgrounded` and `Application Opened` on every Activity change.
+2. **Raise the `DashX/SDK` floor in `DashXReactNative.podspec`** from `>= 1.5.1` to `>= 1.6.0`, the dashx-ios release that records screen views as `$screen` with `$screen_name`, Update the example pod tag in the podspec comment to match, and add a "Required upgrade steps" entry telling consumers to bump the dashx-ios tag in their `ios/Podfile`, as in 1.4.1.
+
 ### Added
 
 - **`DashX.enableLifecycleTracking()` on Android.** Previously iOS only (a no-op on Android). It now registers the dashx-android activity lifecycle callbacks with the application context. Call it after `configure`. The pinned dashx-android 1.2.8 sends open and background events on every Activity change, including system dialogs such as the notification permission prompt; release this together with the dashx-android bump that makes them app-level.
