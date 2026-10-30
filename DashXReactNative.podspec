@@ -21,13 +21,14 @@ Pod::Spec.new do |s|
   install_modules_dependencies(s)
 
   # DashX iOS SDK — consumers must provide the source in their Podfile:
-  #   pod 'DashX/SDK', :git => 'https://github.com/dashxhq/dashx-ios.git', :tag => '1.6.1'
+  #   pod 'DashX/SDK', :git => 'https://github.com/dashxhq/dashx-ios.git', :tag => '1.6.2'
   # For local development:
   #   pod 'DashX', :path => '../dashx-ios'
   #
-  # Floor of 1.6.1, the first release whose automatic event names match
-  # dashx-android 1.5.0 ($screen, Deep Link Opened, Push Notification Tapped).
-  s.dependency "DashX/SDK", ">= 1.6.1"
+  # Floor of 1.6.2, which fixes a crash on a network interface without an
+  # address and keeps a replayed event's queued identity. (1.6.1 was the first
+  # release whose automatic event names match dashx-android 1.5.0.)
+  s.dependency "DashX/SDK", ">= 1.6.2"
 
   # Hard dependency so that `canImport(FirebaseMessaging)`
   # evaluates at this pod's compile time, where consumer-Podfile pods aren't
