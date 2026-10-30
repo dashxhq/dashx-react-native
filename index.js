@@ -216,7 +216,7 @@ const DashX = {
       );
     }
 
-    let lastRouteName = null;
+    let lastRouteId = null;
     let active = true;
 
     const trackCurrentRoute = () => {
@@ -227,8 +227,12 @@ const DashX = {
       }
       const route = navigation.getCurrentRoute();
       const routeName = route && route.name;
-      if (!routeName || routeName === lastRouteName) return;
-      lastRouteName = routeName;
+      if (!routeName) return;
+      // By key, so pushing a second instance of a screen (or going back to the
+      // first) is a new view; params changes keep the key and are not.
+      const routeId = route.key || routeName;
+      if (routeId === lastRouteId) return;
+      lastRouteId = routeId;
       DashX.screen(routeName);
     };
 
