@@ -2,6 +2,21 @@
 
 All notable changes to `@dashx/react-native` are documented in this file. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions follow [SemVer](https://semver.org/).
 
+## [1.5.5] — 2026-10-30
+
+### Required upgrade steps
+
+1. **Bump the dashx-ios pod tag to 1.6.2 in your `ios/Podfile`**. `pod install` refuses the upgrade otherwise, because the podspec floor is now `>= 1.6.2`:
+
+   ```ruby
+   pod 'DashX/SDK', :git => 'https://github.com/dashxhq/dashx-ios.git', :tag => '1.6.2'
+   ```
+
+### Fixed
+
+- **iOS: no crash on a network interface without an address.** dashx-ios 1.6.2 skips an interface whose address is null when it collects the device's IP address for each event's system context. Before, that was a fatal Swift error, which JavaScript cannot catch. The dashx-ios floor is raised to 1.6.2 so apps cannot stay on the version with the crash.
+- **Events tracked while signed out stay anonymous when they are retried after sign-in.** Both native SDKs replayed a queued event that had no account uid with the uid of whoever had signed in by then, crediting their account with it. dashx-android 1.5.3 and dashx-ios 1.6.2 keep the identity the event was queued with. The module now depends on dashx-android 1.5.3 (was 1.5.2).
+
 ## [1.5.4] — 2026-10-30
 
 ### Fixed
