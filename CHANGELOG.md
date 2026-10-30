@@ -2,6 +2,12 @@
 
 All notable changes to `@dashx/react-native` are documented in this file. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions follow [SemVer](https://semver.org/).
 
+## [1.5.2] — 2026-10-30
+
+### Fixed
+
+- **Android: dashx-android 1.5.1.** The module now depends on dashx-android 1.5.1 (was 1.5.0). An unreadable value in the SDK's encrypted preferences no longer crashes the app: `subscribe()` threw from Firebase's token callback on the main thread, outside any JavaScript `try`/`catch`. Events that fail to send are retried during the session instead of at the next app launch, and the offline event queue no longer throws or drops events under concurrent use. Apps that declared dashx-android 1.5.1 themselves to get these fixes can drop that override.
+
 ## [1.5.1] — 2026-10-28
 
 ### Fixed
