@@ -2,6 +2,12 @@
 
 All notable changes to `@dashx/react-native` are documented in this file. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions follow [SemVer](https://semver.org/).
 
+## [1.5.3] — 2026-10-30
+
+### Fixed
+
+- **Android: dashx-android 1.5.2.** The module now depends on dashx-android 1.5.2 (was 1.5.1). An unreadable value in the SDK's encrypted preferences no longer crashes the app from the advertising info refresh, which runs at `configure` and on every event in a background coroutine, and no longer makes `configure` fail on every launch; an unreadable stored user leaves the device anonymous until the next `identify`. Push `image` and `large_icon` are downsampled before decoding, so a large image cannot run the app out of memory, and the notification still shows its text when an image cannot be loaded. An exception from a notification tap or dismiss listener, including this module's bridge to `DashX.onNotificationClicked`, is now logged instead of crashing the app.
+
 ## [1.5.2] — 2026-10-30
 
 ### Fixed
