@@ -608,8 +608,8 @@ function createNavigationRef({ ready = true, routeName = 'Home' } = {}) {
     }),
     getCurrentRoute: jest.fn(() => ref.route),
     isReady: jest.fn(() => ref.ready),
-    navigate(name, params) {
-      ref.route = { name, params };
+    navigate(name, params, key) {
+      ref.route = { name, params, key };
       ref.emitState();
     },
     emitState() {
@@ -660,6 +660,28 @@ describe('trackNavigation', () => {
       ['Profile', null],
       ['Home', null],
     ]);
+  });
+
+  it('sends a view per route instance when routes have keys, even with the same name', () => {
+    const ref = createNavigationRef({ routeName: null });
+    DashX.trackNavigation(ref);
+    ref.navigate('Topic', { id: 'a' }, 'Topic-a');
+    ref.navigate('Topic', { id: 'b' }, 'Topic-b');
+    ref.navigate('Topic', { id: 'a' }, 'Topic-a');
+    expect(mockNativeModule.screen.mock.calls).toEqual([
+      ['Topic', null],
+      ['Topic', null],
+      ['Topic', null],
+    ]);
+  });
+
+  it('does not resend when the focused route keeps its key', () => {
+    const ref = createNavigationRef({ routeName: null });
+    DashX.trackNavigation(ref);
+    ref.navigate('Topic', { id: 'a' }, 'Topic-a');
+    ref.emitState();
+    ref.navigate('Topic', { id: 'a', tab: 'notes' }, 'Topic-a');
+    expect(mockNativeModule.screen).toHaveBeenCalledTimes(1);
   });
 
   it('stops sending after unsubscribe', () => {

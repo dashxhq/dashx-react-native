@@ -2,6 +2,12 @@
 
 All notable changes to `@dashx/react-native` are documented in this file. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions follow [SemVer](https://semver.org/).
 
+## [1.5.4] — 2026-10-30
+
+### Fixed
+
+- **`trackNavigation` sends a screen view for each route instance.** It compared route names, so opening a second instance of the same screen (topic A → topic B, both `Topic`) and going back to the first sent one `$screen` instead of three. It now compares `route.key`, which React Navigation sets per instance, and falls back to the name for a route without one. A params change on the focused route still sends nothing, and the reported `$screen_name` is unchanged.
+
 ## [1.5.3] — 2026-10-30
 
 ### Fixed

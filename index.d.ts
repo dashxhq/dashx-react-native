@@ -87,6 +87,8 @@ export interface ProcessURLOptions {
 
 export interface NavigationRouteLike {
   name: string;
+  /** Identifies the route instance; React Navigation always sets it. */
+  key?: string;
   params?: object;
 }
 
@@ -229,8 +231,11 @@ export interface DashXInstance {
   /**
    * Send a screen view for each React Navigation route change. Sends the
    * current route once the container is ready, then `screen(route.name)`
-   * whenever the focused route's name changes (params are not sent).
-   * Returns a function that stops tracking.
+   * whenever a different route instance gains focus, told apart by
+   * `route.key` (or the name, for a route without one). Pushing a second
+   * instance of a screen, or going back to the first, is a new view; a params
+   * change is not, and params are not sent. Returns a function that stops
+   * tracking.
    *
    * Call it from `NavigationContainer`'s `onReady` so the first screen is
    * captured. A ref from `useNavigationContainerRef()` or

@@ -64,7 +64,7 @@ DashX.enableLifecycleTracking();
 
 ### Screen views with React Navigation
 
-React Native screens are routes rather than native screens, so track them from the navigation container. `trackNavigation` sends `DashX.screen(route.name)`, recorded as `$screen` with the route name in `$screen_name`, for the first route and then whenever the focused route's name changes. Route params are not sent. Call it from `onReady` so the first screen is captured; it returns a function that stops tracking.
+React Native screens are routes rather than native screens, so track them from the navigation container. `trackNavigation` sends `DashX.screen(route.name)`, recorded as `$screen` with the route name in `$screen_name`, for the first route and then whenever a different route instance gains focus. Instances are told apart by `route.key`, so opening a second instance of a screen, or going back to the first, counts as a new view; changing params does not. Route params are not sent. Call it from `onReady` so the first screen is captured; it returns a function that stops tracking.
 
 ```jsx
 import { NavigationContainer, useNavigationContainerRef } from '@react-navigation/native';
