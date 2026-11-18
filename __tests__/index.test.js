@@ -819,6 +819,53 @@ describe('chat', () => {
     conversation.close();
   });
 
+  it('applies a reply-only update to the state it already holds', () => {
+    const conversation = open();
+    const listener = jest.fn();
+    conversation.addStateListener(listener);
+    emitChatEvent({ leaseId: leaseIdOf(), type: 'state', state: ready(['m1']) });
+    const { messages } = conversation.state;
+    const reply = { turnSeq: 2, text: 'Hel', isComplete: false };
+
+    emitChatEvent({
+      leaseId: leaseIdOf(),
+      type: 'streamingReply',
+      streamingReply: reply,
+    });
+    expect(conversation.state).toEqual({
+      ...ready(['m1']),
+      streamingReply: reply,
+    });
+    expect(conversation.state.messages).toBe(messages);
+    expect(listener).toHaveBeenLastCalledWith(conversation.state);
+
+    emitChatEvent({
+      leaseId: leaseIdOf(),
+      type: 'streamingReply',
+      streamingReply: null,
+    });
+    expect(conversation.state).toEqual(ready(['m1']));
+    expect(listener).toHaveBeenLastCalledWith(ready(['m1']));
+    conversation.close();
+  });
+
+  it('ignores a reply-only update before a ready state', () => {
+    const conversation = open();
+    const listener = jest.fn();
+    conversation.addStateListener(listener);
+    listener.mockClear();
+
+    emitChatEvent({
+      leaseId: leaseIdOf(),
+      type: 'streamingReply',
+      streamingReply: { turnSeq: 2, text: 'Hel', isComplete: false },
+    });
+
+    expect(conversation.state).toEqual({ status: 'loading' });
+    expect(listener).not.toHaveBeenCalled();
+    conversation.close();
+  });
+
   it('delivers a state only to the lease it belongs to', () => {
     const first = open('conv-1');
     const second = open('conv-2');

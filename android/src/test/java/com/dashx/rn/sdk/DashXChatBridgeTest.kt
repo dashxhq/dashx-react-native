@@ -9,6 +9,7 @@ import com.dashx.rn.sdk.util.WritableFactory
 import com.facebook.react.bridge.JavaOnlyArray
 import com.facebook.react.bridge.JavaOnlyMap
 import com.facebook.react.bridge.ReadableType
+import com.facebook.react.bridge.WritableMap
 import com.facebook.react.bridge.WritableNativeArray
 import com.facebook.react.bridge.WritableNativeMap
 import kotlinx.serialization.json.buildJsonObject
@@ -101,6 +102,49 @@ class DashXChatBridgeTest {
         assertEquals(8.0, reply?.getDouble("turnSeq") ?: -1.0, 0.0)
         assertEquals("Hel", reply?.getString("text"))
         assertFalse(reply?.getBoolean("isComplete") ?: true)
+    }
+
+    private class Sent(val type: String, val body: WritableMap)
+
+    private fun StateUpdates.sendCapturing(state: ConversationState): Sent {
+        var sent: Sent? = null
+        send(state) { type, fill -> sent = Sent(type, WritableFactory.createMap().apply(fill)) }
+        return sent!!
+    }
+
+    @Test
+    fun `only the reply is sent when the messages and paging are unchanged`() {
+        val updates = StateUpdates()
+        val messages = listOf(message(null))
+        val reply = ChatStreamingReply(turnSeq = 8L, text = "Hel", isComplete = false)
+
+        val opened = updates.sendCapturing(ConversationState.Ready(messages))
+        assertEquals("state", opened.type)
+        assertEquals("m1", opened.body.getMap("state")?.getArray("messages")?.getMap(0)?.getString("id"))
+
+        val streaming = updates.sendCapturing(ConversationState.Ready(messages, streamingReply = reply))
+        assertEquals("streamingReply", streaming.type)
+        assertFalse(streaming.body.hasKey("state"))
+        assertEquals("Hel", streaming.body.getMap("streamingReply")?.getString("text"))
+
+        val cleared = updates.sendCapturing(ConversationState.Ready(messages))
+        assertEquals("streamingReply", cleared.type)
+        assertTrue(cleared.body.hasKey("streamingReply"))
+        assertEquals(ReadableType.Null, cleared.body.getType("streamingReply"))
+    }
+
+    @Test
+    fun `the whole state is sent when the messages, paging or status change`() {
+        val updates = StateUpdates()
+        val messages = listOf(message(null))
+        val more = messages + message("in_app_chat:abc")
+
+        assertEquals("state", updates.sendCapturing(ConversationState.Loading).type)
+        assertEquals("state", updates.sendCapturing(ConversationState.Ready(messages)).type)
+        assertEquals("state", updates.sendCapturing(ConversationState.Ready(more)).type)
+        assertEquals("state", updates.sendCapturing(ConversationState.Ready(more, hasOlderMessages = true)).type)
+        assertEquals("state", updates.sendCapturing(ConversationState.Error(DashXError.SessionEnded())).type)
+        assertEquals("state", updates.sendCapturing(ConversationState.Ready(more, hasOlderMessages = true)).type)
     }
 
     @Test

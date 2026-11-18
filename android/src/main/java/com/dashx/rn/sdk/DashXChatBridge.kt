@@ -3,6 +3,7 @@ package com.dashx.rn.sdk
 import com.dashx.android.DashX
 import com.dashx.android.DashXError
 import com.dashx.android.chat.ChatMessage
+import com.dashx.android.chat.ChatStreamingReply
 import com.dashx.android.chat.ConversationState
 import com.dashx.android.chat.ConversationStateListener
 import com.dashx.android.chat.DashXConversationLease
@@ -37,9 +38,10 @@ internal class DashXChatBridge(private val reactContext: ReactApplicationContext
             emit(leaseId, "terminated") { putString("reason", "sessionEnded") }
         }
         leases.put(leaseId, lease)?.close()
+        val updates = StateUpdates()
         // Replays the current state, so JS gets one without asking.
         lease.addStateListener(ConversationStateListener { state ->
-            emit(leaseId, "state") { putMap("state", stateToMap(state)) }
+            updates.send(state) { type, fill -> emit(leaseId, type, fill) }
         })
     }
 
@@ -170,18 +172,20 @@ internal class DashXChatBridge(private val reactContext: ReactApplicationContext
                     state.messages.forEach { messages.pushMap(messageToMap(it)) }
                     putArray("messages", messages)
                     putBoolean("hasOlderMessages", state.hasOlderMessages)
-                    putMap("streamingReply", state.streamingReply?.let { reply ->
-                        WritableFactory.createMap().apply {
-                            putDouble("turnSeq", reply.turnSeq.toDouble())
-                            putString("text", reply.text)
-                            putBoolean("isComplete", reply.isComplete)
-                        }
-                    })
+                    putMap("streamingReply", replyToMap(state.streamingReply))
                 }
                 is ConversationState.Error -> {
                     putString("status", "error")
                     putMap("error", errorToMap(state.cause))
                 }
+            }
+        }
+
+        fun replyToMap(reply: ChatStreamingReply?): WritableMap? = reply?.let {
+            WritableFactory.createMap().apply {
+                putDouble("turnSeq", it.turnSeq.toDouble())
+                putString("text", it.text)
+                putBoolean("isComplete", it.isComplete)
             }
         }
 
@@ -268,6 +272,31 @@ internal class DashXChatBridge(private val reactContext: ReactApplicationContext
             return (0 until array.size()).mapNotNull { i ->
                 if (array.getType(i) == ReadableType.String) array.getString(i) else null
             }
+        }
+    }
+}
+
+/**
+ * Decides what one lease's next state event carries. JS caches the last state, so when only the
+ * streamed reply changed, the messages and paging it already holds are not sent again: the SDK
+ * hands over the same messages list then.
+ */
+internal class StateUpdates {
+    private var sentReady: ConversationState.Ready? = null
+
+    /** [emit] runs under the lock, so updates reach JS in the order they were decided. */
+    @Synchronized
+    fun send(state: ConversationState, emit: (type: String, fill: WritableMap.() -> Unit) -> Unit) {
+        val previous = sentReady
+        val ready = state as? ConversationState.Ready
+        sentReady = ready
+        if (ready != null && previous != null && previous.messages === ready.messages &&
+            previous.hasOlderMessages == ready.hasOlderMessages
+        ) {
+            val reply = DashXChatBridge.replyToMap(ready.streamingReply)
+            emit("streamingReply") { putMap("streamingReply", reply) }
+        } else {
+            emit("state") { putMap("state", DashXChatBridge.stateToMap(state)) }
         }
     }
 }

@@ -88,6 +88,12 @@ function handleChatEvent(event) {
   if (event.type === 'state') {
     lease.state = event.state;
     notifyChatListeners(lease.stateListeners, lease.state);
+  } else if (event.type === 'streamingReply') {
+    // Only the reply changed. Native sends this after a ready state, whose
+    // messages and paging stay as they are.
+    if (lease.state.status !== 'ready') return;
+    lease.state = { ...lease.state, streamingReply: event.streamingReply };
+    notifyChatListeners(lease.stateListeners, lease.state);
   } else if (event.type === 'terminated') {
     notifyChatListeners(lease.terminatedListeners, event.reason);
   } else if (event.type === 'loadPreviousPageError') {

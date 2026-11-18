@@ -29,8 +29,9 @@ final class DashXChatBridge {
     func open(leaseId: String, chatIdentityId: String, conversationId: String) {
         let emit = self.emit
         let lease = DashXClient.instance.chat(chatIdentityId: chatIdentityId).openConversation(conversationId)
+        let updates = StateUpdates()
         let observer = DashXConversationStateObserver { state in
-            emit(["leaseId": leaseId, "type": "state", "state": DashXChatBridge.serialize(state)])
+            updates.send(state, leaseId: leaseId, emit: emit)
         }
         lease.setOnTerminated { _ in
             emit(["leaseId": leaseId, "type": "terminated", "reason": "sessionEnded"])
@@ -197,7 +198,7 @@ final class DashXChatBridge {
                 "status": "ready",
                 "messages": messages.map { serialize($0) },
                 "hasOlderMessages": hasOlderMessages,
-                "streamingReply": streamingReply.map { serialize($0) as Any } ?? NSNull(),
+                "streamingReply": serialize(streamingReply),
             ]
         case .error(let error):
             return ["status": "error", "error": serialize(error)]
@@ -219,7 +220,8 @@ final class DashXChatBridge {
         ]
     }
 
-    static func serialize(_ reply: DashXStreamingReply) -> [String: Any] {
+    static func serialize(_ reply: DashXStreamingReply?) -> Any {
+        guard let reply else { return NSNull() }
         return ["turnSeq": reply.turnSeq, "text": reply.text, "isComplete": reply.isComplete]
     }
 
@@ -281,5 +283,32 @@ final class DashXChatBridge {
             error.localizedDescription,
             NSError(domain: "DashXChat", code: 0, userInfo: userInfo)
         )
+    }
+}
+
+/// Decides what one lease's next state event carries. JS caches the last state, so when only the
+/// streamed reply changed, the messages and paging it already holds are not sent again.
+final class StateUpdates {
+    private let lock = NSLock()
+    private var sentReady: (messages: [DashXChatMessage], hasOlderMessages: Bool)?
+
+    /// `emit` runs under the lock, so updates reach JS in the order they were decided. The SDK hands
+    /// over the same messages array when only the reply changed, so the comparison is a buffer check.
+    func send(_ state: DashXConversationState, leaseId: String, emit: ([String: Any]) -> Void) {
+        lock.lock()
+        defer { lock.unlock() }
+        guard case .ready(let messages, let hasOlderMessages, let streamingReply) = state else {
+            sentReady = nil
+            emit(["leaseId": leaseId, "type": "state", "state": DashXChatBridge.serialize(state)])
+            return
+        }
+        let previous = sentReady
+        sentReady = (messages, hasOlderMessages)
+        if let previous, previous.hasOlderMessages == hasOlderMessages, previous.messages == messages {
+            let reply = DashXChatBridge.serialize(streamingReply)
+            emit(["leaseId": leaseId, "type": "streamingReply", "streamingReply": reply])
+        } else {
+            emit(["leaseId": leaseId, "type": "state", "state": DashXChatBridge.serialize(state)])
+        }
     }
 }
