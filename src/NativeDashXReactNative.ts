@@ -35,6 +35,33 @@ export interface Spec extends TurboModule {
   requestNotificationPermission(fallbackToSettings: boolean): Promise<number>;
   getNotificationPermissionStatus(): Promise<number>;
 
+  chatOpenConversation(
+    leaseId: string,
+    chatIdentityId: string,
+    conversationId: string
+  ): void;
+  chatCloseConversation(leaseId: string): void;
+  chatSetConversationVisible(leaseId: string, visible: boolean): void;
+  chatSendMessage(leaseId: string, content: Object): Promise<Object>;
+  chatLoadPreviousPage(leaseId: string, requestId: number): void;
+  chatFetchConversations(
+    chatIdentityId: string,
+    options: Object | null
+  ): Promise<Object[]>;
+  chatFetchConversation(
+    chatIdentityId: string,
+    conversationId: string
+  ): Promise<Object>;
+  chatSummarizeConversations(
+    chatIdentityId: string,
+    options: Object | null
+  ): Promise<number>;
+  chatSummarizeUnread(chatIdentityId: string): Promise<number>;
+  chatResolveConversation(
+    chatIdentityId: string,
+    conversationId: string
+  ): Promise<Object>;
+
   addListener(eventName: string): void;
   removeListeners(count: number): void;
 }

@@ -95,6 +95,46 @@ class DashXReactNativeModule(reactContext: ReactApplicationContext) :
         impl.getNotificationPermissionStatus(promise)
 
     @ReactMethod
+    fun chatOpenConversation(leaseId: String, chatIdentityId: String, conversationId: String) =
+        impl.chatOpenConversation(leaseId, chatIdentityId, conversationId)
+
+    @ReactMethod
+    fun chatCloseConversation(leaseId: String) =
+        impl.chatCloseConversation(leaseId)
+
+    @ReactMethod
+    fun chatSetConversationVisible(leaseId: String, visible: Boolean) =
+        impl.chatSetConversationVisible(leaseId, visible)
+
+    @ReactMethod
+    fun chatSendMessage(leaseId: String, content: ReadableMap, promise: Promise) =
+        impl.chatSendMessage(leaseId, content, promise)
+
+    @ReactMethod
+    fun chatLoadPreviousPage(leaseId: String, requestId: Double) =
+        impl.chatLoadPreviousPage(leaseId, requestId)
+
+    @ReactMethod
+    fun chatFetchConversations(chatIdentityId: String, options: ReadableMap?, promise: Promise) =
+        impl.chatFetchConversations(chatIdentityId, options, promise)
+
+    @ReactMethod
+    fun chatFetchConversation(chatIdentityId: String, conversationId: String, promise: Promise) =
+        impl.chatFetchConversation(chatIdentityId, conversationId, promise)
+
+    @ReactMethod
+    fun chatSummarizeConversations(chatIdentityId: String, options: ReadableMap?, promise: Promise) =
+        impl.chatSummarizeConversations(chatIdentityId, options, promise)
+
+    @ReactMethod
+    fun chatSummarizeUnread(chatIdentityId: String, promise: Promise) =
+        impl.chatSummarizeUnread(chatIdentityId, promise)
+
+    @ReactMethod
+    fun chatResolveConversation(chatIdentityId: String, conversationId: String, promise: Promise) =
+        impl.chatResolveConversation(chatIdentityId, conversationId, promise)
+
+    @ReactMethod
     fun addListener(eventName: String) {
         // Required for RN built-in Event Emitter Calls
     }

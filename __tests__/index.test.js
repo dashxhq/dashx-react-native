@@ -20,6 +20,16 @@ const mockNativeModule = {
   trackNotificationNavigation: jest.fn(),
   requestNotificationPermission: jest.fn(),
   getNotificationPermissionStatus: jest.fn(),
+  chatOpenConversation: jest.fn(),
+  chatCloseConversation: jest.fn(),
+  chatSetConversationVisible: jest.fn(),
+  chatSendMessage: jest.fn(),
+  chatLoadPreviousPage: jest.fn(),
+  chatFetchConversations: jest.fn(),
+  chatFetchConversation: jest.fn(),
+  chatSummarizeConversations: jest.fn(),
+  chatSummarizeUnread: jest.fn(),
+  chatResolveConversation: jest.fn(),
   addListener: jest.fn(),
   removeListeners: jest.fn(),
 };
@@ -719,6 +729,288 @@ describe('trackNavigation', () => {
     );
     expect(() => DashX.trackNavigation({ current: {} })).toThrow(
       'navigationRef must be a NavigationContainer ref'
+    );
+  });
+});
+
+// --- in-app chat ---
+
+describe('chat', () => {
+  const emitChatEvent = (event) => {
+    const call = mockAddListener.mock.calls.find(
+      ([name]) => name === 'chatConversationEvent'
+    );
+    call[1](event);
+  };
+  const leaseIdOf = (callIndex = 0) =>
+    mockNativeModule.chatOpenConversation.mock.calls[callIndex][0];
+  const ready = (ids) => ({
+    status: 'ready',
+    messages: ids.map((id) => ({ id })),
+    hasOlderMessages: false,
+    streamingReply: null,
+  });
+
+  // The event subscription is made once per JS runtime, so it has to survive
+  // the file-wide clearAllMocks.
+  let chatListenerCall = null;
+  beforeEach(() => {
+    if (chatListenerCall) mockAddListener.mock.calls.push(chatListenerCall);
+  });
+  const open = (conversationId = 'conv-1') => {
+    const conversation = DashX.chat('identity-1').openConversation(
+      conversationId
+    );
+    chatListenerCall =
+      chatListenerCall ||
+      mockAddListener.mock.calls.find(
+        ([name]) => name === 'chatConversationEvent'
+      );
+    return conversation;
+  };
+
+  it('throws without a chat identity id', () => {
+    expect(() => DashX.chat()).toThrow('chatIdentityId is required');
+    expect(() => DashX.chat(42)).toThrow('chatIdentityId is required');
+  });
+
+  it('throws without a conversation id', () => {
+    const chat = DashX.chat('identity-1');
+    expect(() => chat.openConversation('')).toThrow(
+      'conversationId is required'
+    );
+    expect(() => chat.fetchConversation()).toThrow('conversationId is required');
+    expect(() => chat.resolveConversation(null)).toThrow(
+      'conversationId is required'
+    );
+  });
+
+  it('opens a native lease per conversation, each with its own id', () => {
+    const first = open('conv-1');
+    const second = open('conv-1');
+
+    expect(first.conversationId).toBe('conv-1');
+    expect(mockNativeModule.chatOpenConversation).toHaveBeenCalledTimes(2);
+    expect(mockNativeModule.chatOpenConversation).toHaveBeenCalledWith(
+      leaseIdOf(0),
+      'identity-1',
+      'conv-1'
+    );
+    expect(leaseIdOf(0)).not.toBe(leaseIdOf(1));
+    first.close();
+    second.close();
+  });
+
+  it('starts loading and replays the current state to a new listener', () => {
+    const conversation = open();
+    const listener = jest.fn();
+
+    expect(conversation.state).toEqual({ status: 'loading' });
+    conversation.addStateListener(listener);
+    expect(listener).toHaveBeenCalledWith({ status: 'loading' });
+
+    emitChatEvent({ leaseId: leaseIdOf(), type: 'state', state: ready(['m1']) });
+    expect(conversation.state).toEqual(ready(['m1']));
+    expect(listener).toHaveBeenLastCalledWith(ready(['m1']));
+
+    const late = jest.fn();
+    conversation.addStateListener(late);
+    expect(late).toHaveBeenCalledWith(ready(['m1']));
+    conversation.close();
+  });
+
+  it('delivers a state only to the lease it belongs to', () => {
+    const first = open('conv-1');
+    const second = open('conv-2');
+
+    emitChatEvent({ leaseId: leaseIdOf(1), type: 'state', state: ready(['m2']) });
+
+    expect(first.state).toEqual({ status: 'loading' });
+    expect(second.state).toEqual(ready(['m2']));
+    first.close();
+    second.close();
+  });
+
+  it('stops delivering to a removed listener', () => {
+    const conversation = open();
+    const listener = jest.fn();
+    const subscription = conversation.addStateListener(listener);
+    listener.mockClear();
+
+    subscription.remove();
+    emitChatEvent({ leaseId: leaseIdOf(), type: 'state', state: ready([]) });
+
+    expect(listener).not.toHaveBeenCalled();
+    conversation.close();
+  });
+
+  it('keeps delivering when a listener throws', () => {
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const conversation = open();
+    const listener = jest.fn();
+    let armed = false;
+    conversation.addStateListener(() => {
+      if (armed) throw new Error('boom');
+    });
+    conversation.addStateListener(listener);
+    armed = true;
+
+    emitChatEvent({ leaseId: leaseIdOf(), type: 'state', state: ready([]) });
+
+    expect(listener).toHaveBeenLastCalledWith(ready([]));
+    conversation.close();
+    errorSpy.mockRestore();
+  });
+
+  it('reports a session that ended underneath the lease', () => {
+    const conversation = open();
+    const listener = jest.fn();
+    conversation.onTerminated(listener);
+
+    emitChatEvent({
+      leaseId: leaseIdOf(),
+      type: 'terminated',
+      reason: 'sessionEnded',
+    });
+
+    expect(listener).toHaveBeenCalledWith('sessionEnded');
+    conversation.close();
+  });
+
+  it('sends a message and resolves with the committed one', async () => {
+    const conversation = open();
+    mockNativeModule.chatSendMessage.mockResolvedValue({ id: 'm1' });
+
+    await expect(conversation.sendMessage({ text: 'Hello' })).resolves.toEqual({
+      id: 'm1',
+    });
+    expect(mockNativeModule.chatSendMessage).toHaveBeenCalledWith(leaseIdOf(), {
+      text: 'Hello',
+    });
+    conversation.close();
+  });
+
+  it('reports the client message id of a failed send', async () => {
+    const conversation = open();
+    const failure = Object.assign(new Error('offline'), {
+      code: 'NETWORK_ERROR',
+      userInfo: { clientMessageId: 'client-1' },
+    });
+    mockNativeModule.chatSendMessage.mockRejectedValue(failure);
+
+    await expect(conversation.sendMessage({ text: 'Hello' })).rejects.toMatchObject(
+      { code: 'NETWORK_ERROR', clientMessageId: 'client-1' }
+    );
+    conversation.close();
+  });
+
+  it('throws when the message content is not an object', () => {
+    const conversation = open();
+    expect(() => conversation.sendMessage('Hello')).toThrow(
+      'content must be an object'
+    );
+    expect(() => conversation.sendMessage(null)).toThrow(
+      'content must be an object'
+    );
+    conversation.close();
+  });
+
+  it('reports a failed older page to the callback of that request', () => {
+    const conversation = open();
+    const first = jest.fn();
+    const second = jest.fn();
+    conversation.loadPreviousPage(first);
+    conversation.loadPreviousPage(second);
+    conversation.loadPreviousPage();
+
+    expect(mockNativeModule.chatLoadPreviousPage).toHaveBeenCalledTimes(3);
+    const [, secondRequestId] =
+      mockNativeModule.chatLoadPreviousPage.mock.calls[1];
+    const error = { code: 'NETWORK_ERROR', message: 'offline' };
+    emitChatEvent({
+      leaseId: leaseIdOf(),
+      type: 'loadPreviousPageError',
+      requestId: secondRequestId,
+      error,
+    });
+
+    expect(first).not.toHaveBeenCalled();
+    expect(second).toHaveBeenCalledWith(error);
+    conversation.close();
+  });
+
+  it('forwards visibility as a boolean', () => {
+    const conversation = open();
+    conversation.setVisible(true);
+    conversation.setVisible(undefined);
+
+    expect(mockNativeModule.chatSetConversationVisible.mock.calls).toEqual([
+      [leaseIdOf(), true],
+      [leaseIdOf(), false],
+    ]);
+    conversation.close();
+  });
+
+  it('closes once and goes quiet afterwards', async () => {
+    const conversation = open();
+    const listener = jest.fn();
+    conversation.addStateListener(listener);
+    listener.mockClear();
+
+    conversation.close();
+    conversation.close();
+    emitChatEvent({ leaseId: leaseIdOf(), type: 'state', state: ready(['m1']) });
+    conversation.setVisible(true);
+    conversation.loadPreviousPage();
+
+    expect(mockNativeModule.chatCloseConversation).toHaveBeenCalledTimes(1);
+    expect(mockNativeModule.chatCloseConversation).toHaveBeenCalledWith(
+      leaseIdOf()
+    );
+    expect(listener).not.toHaveBeenCalled();
+    expect(mockNativeModule.chatSetConversationVisible).not.toHaveBeenCalled();
+    expect(mockNativeModule.chatLoadPreviousPage).not.toHaveBeenCalled();
+    await expect(conversation.sendMessage({ text: 'Hello' })).rejects.toMatchObject(
+      { code: 'SESSION_ENDED' }
+    );
+    expect(mockNativeModule.chatSendMessage).not.toHaveBeenCalled();
+  });
+
+  it('fetches conversations, leaving absent options out', () => {
+    const chat = DashX.chat('identity-1');
+    chat.fetchConversations({ limit: 20, page: undefined, statuses: ['ACTIVE'] });
+    chat.fetchConversations();
+
+    expect(mockNativeModule.chatFetchConversations.mock.calls).toEqual([
+      ['identity-1', { limit: 20, statuses: ['ACTIVE'] }],
+      ['identity-1', null],
+    ]);
+    expect(() => chat.fetchConversations('ACTIVE')).toThrow(
+      'options must be an object'
+    );
+  });
+
+  it('passes the identity to the identity-scoped operations', () => {
+    const chat = DashX.chat('identity-1');
+    chat.fetchConversation('conv-1');
+    chat.summarizeConversations({ properties: { order: 'o1' }, limit: 5 });
+    chat.summarizeUnread();
+    chat.resolveConversation('conv-1');
+
+    expect(mockNativeModule.chatFetchConversation).toHaveBeenCalledWith(
+      'identity-1',
+      'conv-1'
+    );
+    expect(mockNativeModule.chatSummarizeConversations).toHaveBeenCalledWith(
+      'identity-1',
+      { properties: { order: 'o1' } }
+    );
+    expect(mockNativeModule.chatSummarizeUnread).toHaveBeenCalledWith(
+      'identity-1'
+    );
+    expect(mockNativeModule.chatResolveConversation).toHaveBeenCalledWith(
+      'identity-1',
+      'conv-1'
     );
   });
 });

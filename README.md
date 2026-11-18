@@ -26,7 +26,7 @@ _DashX SDK for React Native_
 
 ## Install
 
-Requires **React Native 0.74+**, **iOS 13.0+**, **Android SDK 26+**, and **Node.js 16+**.
+Requires **React Native 0.74+**, **iOS 15.0+**, **Android SDK 26+**, and **Node.js 16+**.
 
 Supports both the **Old Architecture** (bridge) and **New Architecture** (TurboModule) from a single install.
 
@@ -83,6 +83,43 @@ export default function App() {
   );
 }
 ```
+
+## In-app chat
+
+Conversations are created by your server, which returns a conversation id together with a chat identity id. Chat needs an identity token, so call `DashX.setIdentity(uid, token)` first.
+
+Open a conversation to get its messages and live updates. The listener is called right away with the current state, then on every change:
+
+```jsx
+import { useEffect, useState } from 'react';
+import DashX from '@dashx/react-native';
+
+function useConversation(chatIdentityId, conversationId) {
+  const [conversation, setConversation] = useState(null);
+  const [state, setState] = useState({ status: 'loading' });
+
+  useEffect(() => {
+    const opened = DashX.chat(chatIdentityId).openConversation(conversationId);
+    opened.addStateListener(setState);
+    opened.setVisible(true);
+    setConversation(opened);
+    return () => opened.close();
+  }, [chatIdentityId, conversationId]);
+
+  return { conversation, state };
+}
+```
+
+`state.status` is `loading`, `ready` or `error`:
+
+- `ready` has `messages` (oldest first), `hasOlderMessages` and `streamingReply`. Call `conversation.loadPreviousPage()` while `hasOlderMessages` is true to load earlier history. `streamingReply` (`turnSeq`, `text`, `isComplete`) is the agent reply while it is being generated, on deployments that stream replies, and `null` otherwise. Show it below the messages; it goes away once the stored reply arrives in `messages`.
+- `error` has `error.code` and `error.message`. The code is `SESSION_ENDED` once the user changes or `DashX.reset()` is called; close the conversation and open a new one to continue.
+
+Send a message with `conversation.sendMessage({ text })`. It resolves with the stored message, which also appears in `state.messages`. If it fails, the error has a `code` and the `clientMessageId` the message was sent with.
+
+`conversation.setVisible(true)` says the conversation is on screen: new messages are marked read and its push notifications are not shown. Call `setVisible(false)` when the screen loses focus, and `close()` when it unmounts. On iOS, foreground notifications are held back only if your app delegate routes them through `DashXNotificationHandler.handleForegroundNotification`.
+
+For an inbox, `DashX.chat(chatIdentityId)` also has `fetchConversations({ limit, page, statuses, properties })`, `fetchConversation(conversationId)`, `summarizeConversations({ statuses, properties })`, `summarizeUnread()` and `resolveConversation(conversationId)`. The unread count is not pushed: ask for it again when the app returns to the foreground or a push arrives.
 
 ## Deep linking and push navigation
 

@@ -2,6 +2,29 @@
 
 All notable changes to `@dashx/react-native` are documented in this file. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions follow [SemVer](https://semver.org/).
 
+## [Unreleased]
+
+### Required upgrade steps
+
+1. **Bump the dashx-ios pod tag to 1.7.0 in your `ios/Podfile`**. `pod install` refuses the upgrade otherwise, because the podspec floor is now `>= 1.7.0`:
+
+   ```ruby
+   pod 'DashX/SDK', :git => 'https://github.com/dashxhq/dashx-ios.git', :tag => '1.7.0'
+   ```
+
+2. **Set the iOS deployment target to 15.0 or later** (`platform :ios, '15.0'` in your `ios/Podfile`). dashx-ios 1.7.0 no longer supports iOS 13 and 14.
+
+### Breaking
+
+- **iOS: `setIdentity(uid, null)` for the current uid keeps the token already held** (dashx-ios 1.7.0; it used to clear it). `reset()` clears the token, and signs the user out as a whole.
+
+### Added
+
+- **In-app chat.** `DashX.chat(chatIdentityId)` returns the chat surface for a chat identity issued by your server. `openConversation(conversationId)` returns a conversation with `state` (`loading`, `ready` with `messages`, `hasOlderMessages` and `streamingReply`, or `error`), `addStateListener`, `onTerminated`, `sendMessage({ text })`, `loadPreviousPage`, `setVisible` (marks messages read and holds back that conversation's push notifications) and `close`. Also `fetchConversations`, `fetchConversation`, `summarizeConversations`, `summarizeUnread` and `resolveConversation`. See the README for an example.
+  - `streamingReply` is the agent reply while it is generated, on deployments that stream replies. It needs dashx-android 1.6.0, which this module now depends on (was 1.5.3).
+  - Chat errors carry a `code`: the backend's code for a GraphQL error, or `NETWORK_ERROR`, `SESSION_ENDED`, `SUBSCRIPTION_FAILED`, `NOT_IDENTIFIED`, `NOT_CONFIGURED`.
+- **iOS: a chat push for the conversation on screen is not shown in the foreground** when notifications go through `DashXNotificationHandler.handleForegroundNotification`. Delivery is still tracked and `onPushNotificationReceived` still fires.
+
 ## [1.5.5] — 2026-10-30
 
 ### Required upgrade steps

@@ -59,6 +59,26 @@ RCT_EXTERN_METHOD(requestNotificationPermission:(BOOL)fallbackToSettings resolve
 
 RCT_EXTERN_METHOD(getNotificationPermissionStatus:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject);
 
+RCT_EXTERN_METHOD(chatOpenConversation:(NSString *)leaseId chatIdentityId:(NSString *)chatIdentityId conversationId:(NSString *)conversationId);
+
+RCT_EXTERN_METHOD(chatCloseConversation:(NSString *)leaseId);
+
+RCT_EXTERN_METHOD(chatSetConversationVisible:(NSString *)leaseId visible:(BOOL)visible);
+
+RCT_EXTERN_METHOD(chatSendMessage:(NSString *)leaseId content:(NSDictionary *)content resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject);
+
+RCT_EXTERN_METHOD(chatLoadPreviousPage:(NSString *)leaseId requestId:(double)requestId);
+
+RCT_EXTERN_METHOD(chatFetchConversations:(NSString *)chatIdentityId options:(id _Nullable)options resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject);
+
+RCT_EXTERN_METHOD(chatFetchConversation:(NSString *)chatIdentityId conversationId:(NSString *)conversationId resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject);
+
+RCT_EXTERN_METHOD(chatSummarizeConversations:(NSString *)chatIdentityId options:(id _Nullable)options resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject);
+
+RCT_EXTERN_METHOD(chatSummarizeUnread:(NSString *)chatIdentityId resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject);
+
+RCT_EXTERN_METHOD(chatResolveConversation:(NSString *)chatIdentityId conversationId:(NSString *)conversationId resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject);
+
 @end
 
 #ifdef RCT_NEW_ARCH_ENABLED

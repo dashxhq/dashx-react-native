@@ -109,7 +109,12 @@ dependencies {
     // Ensure Firebase Messaging types are available for FCM service subclass
     implementation 'com.google.firebase:firebase-messaging-ktx:23.1.2'
 
-    implementation "com.dashx:dashx-android:1.5.3"
+    implementation "com.dashx:dashx-android:1.6.0"
+
+    // The chat bridge reads dashx-android's generated conversation summary,
+    // whose supertype is an Apollo class that dashx-android does not export.
+    // Keep the version in step with the one dashx-android is built with.
+    compileOnly 'com.apollographql.apollo:apollo-api:4.4.1'
 
     // Unit tests for `util/Utils.kt` — JVM-only, no Robolectric. The RN
     // `react-android` artifact is pulled in at test runtime (not as a
@@ -118,4 +123,5 @@ dependencies {
     // JNI-backed `WritableNativeMap` / `WritableNativeArray` in JVM tests.
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'com.facebook.react:react-android:+'
+    testImplementation 'com.apollographql.apollo:apollo-api:4.4.1'
 }

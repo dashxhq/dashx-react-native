@@ -10,7 +10,7 @@ Pod::Spec.new do |s|
   s.license      = package["license"]
   s.authors      = package["author"]
 
-  s.platforms    = { :ios => "13.0" }
+  s.platforms    = { :ios => "15.0" }
   s.source       = { :git => "https://github.com/dashxhq/dashx-react-native.git", :tag => "#{s.version}" }
 
   s.source_files = "ios/**/*.{h,m,mm,swift}"
@@ -21,14 +21,13 @@ Pod::Spec.new do |s|
   install_modules_dependencies(s)
 
   # DashX iOS SDK — consumers must provide the source in their Podfile:
-  #   pod 'DashX/SDK', :git => 'https://github.com/dashxhq/dashx-ios.git', :tag => '1.6.2'
+  #   pod 'DashX/SDK', :git => 'https://github.com/dashxhq/dashx-ios.git', :tag => '1.7.0'
   # For local development:
   #   pod 'DashX', :path => '../dashx-ios'
   #
-  # Floor of 1.6.2, which fixes a crash on a network interface without an
-  # address and keeps a replayed event's queued identity. (1.6.1 was the first
-  # release whose automatic event names match dashx-android 1.5.0.)
-  s.dependency "DashX/SDK", ">= 1.6.2"
+  # Floor of 1.7.0, the first release with in-app chat. It also raises the
+  # minimum deployment target to iOS 15.0.
+  s.dependency "DashX/SDK", ">= 1.7.0"
 
   # Hard dependency so that `canImport(FirebaseMessaging)`
   # evaluates at this pod's compile time, where consumer-Podfile pods aren't

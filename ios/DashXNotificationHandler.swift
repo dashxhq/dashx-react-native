@@ -208,7 +208,8 @@ public final class DashXNotificationHandler: NSObject {
             body: bridgeSafePayload(from: userInfo)
         )
 
-        completionHandler([.banner, .sound])
+        // A chat push for the conversation on screen is not presented.
+        completionHandler(DashXPush.shouldDisplay(userInfo) ? [.banner, .sound] : [])
     }
 
     // MARK: - Private Helpers
