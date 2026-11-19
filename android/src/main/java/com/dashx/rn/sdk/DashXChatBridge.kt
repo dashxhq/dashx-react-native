@@ -60,18 +60,13 @@ internal class DashXChatBridge(private val reactContext: ReactApplicationContext
         lease.close()
     }
 
-    private fun DashXConversationLease.hasSessionEnded(): Boolean =
-        (state.value as? ConversationState.Error)?.cause is DashXError.SessionEnded
-
     fun setVisible(leaseId: String, visible: Boolean) {
         leases[leaseId]?.setVisible(visible)
     }
 
     fun sendMessage(leaseId: String, content: ReadableMap, promise: Promise) {
         val lease = leases[leaseId]
-        // dashx-android 1.6.0 still sends through a lease whose session ended, with whichever
-        // identity token is current by then. The session ends before the next token is stored.
-        if (lease == null || lease.hasSessionEnded()) {
+        if (lease == null) {
             reject(promise, DashXError.SessionEnded())
             return
         }
