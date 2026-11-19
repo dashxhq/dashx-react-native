@@ -190,7 +190,8 @@ public final class DashXNotificationHandler: NSObject {
 
     /// Handles a notification that arrived while the app is in the foreground.
     /// Tracks the delivery event, emits `messageReceived` to JS, forwards to
-    /// Firebase analytics, and presents the notification as a banner with sound.
+    /// Firebase analytics, and presents the notification as a banner with sound,
+    /// unless it is a chat push for the conversation on screen.
     /// Call this from `userNotificationCenter(_:willPresent:withCompletionHandler:)`.
     @objc
     public static func handleForegroundNotification(

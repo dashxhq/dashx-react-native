@@ -140,7 +140,8 @@ export interface ChatStreamingReply {
  * `code` is the backend's error code for a GraphQL error (`UNAUTHORIZED`,
  * `FORBIDDEN`, `NOT_FOUND`, `UNPROCESSABLE_ENTITY`, ...) or `GRAPHQL_ERROR`
  * when it gave none; otherwise `NETWORK_ERROR`, `SESSION_ENDED`,
- * `SUBSCRIPTION_FAILED`, `NOT_IDENTIFIED`, `NOT_CONFIGURED` or `EUNSPECIFIED`.
+ * `SUBSCRIPTION_FAILED`, `NOT_IDENTIFIED`, `NOT_CONFIGURED` (Android only) or
+ * `EUNSPECIFIED`.
  */
 export interface ChatError {
   code: string;
