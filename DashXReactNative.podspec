@@ -21,13 +21,14 @@ Pod::Spec.new do |s|
   install_modules_dependencies(s)
 
   # DashX iOS SDK — consumers must provide the source in their Podfile:
-  #   pod 'DashX/SDK', :git => 'https://github.com/dashxhq/dashx-ios.git', :tag => '1.7.0'
+  #   pod 'DashX/SDK', :git => 'https://github.com/dashxhq/dashx-ios.git', :tag => '1.7.1'
   # For local development:
   #   pod 'DashX', :path => '../dashx-ios'
   #
-  # Floor of 1.7.0, the first release with in-app chat. It also raises the
-  # minimum deployment target to iOS 15.0.
-  s.dependency "DashX/SDK", ">= 1.7.0"
+  # Floor of 1.7.1. 1.7.0 is the first release with in-app chat and raises the
+  # minimum deployment target to iOS 15.0; 1.7.1 drops a streamed reply once
+  # the visitor's next message arrives, as dashx-android 1.6.0 does.
+  s.dependency "DashX/SDK", ">= 1.7.1"
 
   # Hard dependency so that `canImport(FirebaseMessaging)`
   # evaluates at this pod's compile time, where consumer-Podfile pods aren't

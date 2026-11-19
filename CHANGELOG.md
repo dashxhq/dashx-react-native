@@ -6,10 +6,10 @@ All notable changes to `@dashx/react-native` are documented in this file. Format
 
 ### Required upgrade steps
 
-1. **Bump the dashx-ios pod tag to 1.7.0 in your `ios/Podfile`**. `pod install` refuses the upgrade otherwise, because the podspec floor is now `>= 1.7.0`:
+1. **Bump the dashx-ios pod tag to 1.7.1 in your `ios/Podfile`**. `pod install` refuses the upgrade otherwise, because the podspec floor is now `>= 1.7.1`:
 
    ```ruby
-   pod 'DashX/SDK', :git => 'https://github.com/dashxhq/dashx-ios.git', :tag => '1.7.0'
+   pod 'DashX/SDK', :git => 'https://github.com/dashxhq/dashx-ios.git', :tag => '1.7.1'
    ```
 
 2. **Set the iOS deployment target to 15.0 or later** (`platform :ios, '15.0'` in your `ios/Podfile`). dashx-ios 1.7.0 no longer supports iOS 13 and 14.
@@ -21,7 +21,7 @@ All notable changes to `@dashx/react-native` are documented in this file. Format
 ### Added
 
 - **In-app chat.** `DashX.chat(chatIdentityId)` returns the chat surface for a chat identity issued by your server. `openConversation(conversationId)` returns a conversation with `state` (`loading`, `ready` with `messages`, `hasOlderMessages` and `streamingReply`, or `error`), `addStateListener`, `onTerminated`, `sendMessage({ text })`, `loadPreviousPage`, `setVisible` (marks messages read and holds back that conversation's push notifications) and `close`. Also `fetchConversations`, `fetchConversation`, `summarizeConversations`, `summarizeUnread` and `resolveConversation`. See the README for an example.
-  - `streamingReply` is the agent reply while it is generated, on deployments that stream replies. It needs dashx-android 1.6.0, which this module now depends on (was 1.5.3).
+  - `streamingReply` is the agent reply while it is generated, on deployments that stream replies. It needs dashx-android 1.6.0, which this module now depends on (was 1.5.3), and dashx-ios 1.7.1: with 1.7.0, a reply still streaming when the visitor sends the next message keeps showing and growing until the server discards it.
   - While a reply streams, only `streamingReply` crosses the bridge, not the whole message history. Listeners still receive the whole state, with the same `messages` array as before when only the reply changed.
   - Chat errors carry a `code`: the backend's code for a GraphQL error, or `NETWORK_ERROR`, `SESSION_ENDED`, `SUBSCRIPTION_FAILED`, `NOT_IDENTIFIED`, `NOT_CONFIGURED`.
 - **iOS: a chat push for the conversation on screen is not shown in the foreground** when notifications go through `DashXNotificationHandler.handleForegroundNotification`. Delivery is still tracked and `onPushNotificationReceived` still fires.
