@@ -115,7 +115,7 @@ function useConversation(chatIdentityId, conversationId) {
 - `ready` has `messages` (oldest first), `hasOlderMessages` and `streamingReply`. Call `conversation.loadPreviousPage()` while `hasOlderMessages` is true to load earlier history. `streamingReply` (`turnSeq`, `text`, `isComplete`) is the agent reply while it is being generated, on deployments that stream replies, and `null` otherwise. Show it below the messages; it goes away once the stored reply arrives in `messages`.
 - `error` has `error.code` and `error.message`. The code is `SESSION_ENDED` once the user changes or `DashX.reset()` is called; close the conversation and open a new one to continue.
 
-Send a message with `conversation.sendMessage({ text })`. It resolves with the stored message, which also appears in `state.messages`. If it fails, the error has a `code` and, when the message was sent, the `clientMessageId` it was sent with.
+Send a message with `conversation.sendMessage({ text })`. It resolves with the stored message, which also appears in `state.messages`. If it fails, the error has a `code` and usually the `clientMessageId` the SDK generated for the send. A `clientMessageId` does not mean the message reached the server: with `NOT_IDENTIFIED` or `SESSION_ENDED` it never did.
 
 `conversation.setVisible(true)` says the conversation is on screen: new messages are marked read and its push notifications are not shown. Call `setVisible(false)` when the screen loses focus, and `close()` when it unmounts. On iOS, foreground notifications are held back only if your app delegate routes them through `DashXNotificationHandler.handleForegroundNotification`.
 

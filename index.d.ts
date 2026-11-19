@@ -190,7 +190,11 @@ export interface ChatSubscription {
 /** The error a failed `sendMessage` rejects with. */
 export interface ChatSendError extends Error {
   code: string;
-  /** The id the message was sent with; absent when nothing was sent. */
+  /**
+   * The id the SDK generated for this send, or absent when the send was
+   * refused before one was generated. Its presence does not mean the message
+   * reached the server: with `NOT_IDENTIFIED` or `SESSION_ENDED` it never did.
+   */
   clientMessageId?: string;
 }
 
