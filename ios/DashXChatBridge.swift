@@ -92,14 +92,21 @@ final class DashXChatBridge {
 
     func loadPreviousPage(leaseId: String, requestId: Double) {
         let emit = self.emit
-        lease(leaseId)?.loadPreviousPage { error in
+        let onComplete = {
+            emit(["leaseId": leaseId, "type": "loadPreviousPageComplete", "requestId": requestId])
+        }
+        guard let lease = lease(leaseId) else {
+            onComplete()
+            return
+        }
+        lease.loadPreviousPage(onError: { error in
             emit([
                 "leaseId": leaseId,
                 "type": "loadPreviousPageError",
                 "requestId": requestId,
                 "error": DashXChatBridge.serialize(error),
             ])
-        }
+        }, onComplete: onComplete)
     }
 
     private func lease(_ leaseId: String) -> DashXConversationLease? {

@@ -109,7 +109,7 @@ dependencies {
     // Ensure Firebase Messaging types are available for FCM service subclass
     implementation 'com.google.firebase:firebase-messaging-ktx:23.1.2'
 
-    implementation "com.dashx:dashx-android:1.6.1"
+    implementation "com.dashx:dashx-android:1.6.2"
 
     // The chat bridge reads dashx-android's generated conversation summary,
     // whose supertype is an Apollo class that dashx-android does not export.

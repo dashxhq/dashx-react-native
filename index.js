@@ -100,6 +100,8 @@ function handleChatEvent(event) {
     const onError = lease.pageErrorCallbacks.get(event.requestId);
     lease.pageErrorCallbacks.delete(event.requestId);
     if (onError) notifyChatListeners([onError], event.error);
+  } else if (event.type === 'loadPreviousPageComplete') {
+    lease.pageErrorCallbacks.delete(event.requestId);
   }
 }
 
@@ -195,7 +197,12 @@ function openChatConversation(chatIdentityId, conversationId) {
       _chatRequestCount += 1;
       const requestId = _chatRequestCount;
       if (onError) lease.pageErrorCallbacks.set(requestId, onError);
-      getNativeDashX().chatLoadPreviousPage(leaseId, requestId);
+      try {
+        getNativeDashX().chatLoadPreviousPage(leaseId, requestId);
+      } catch (error) {
+        lease.pageErrorCallbacks.delete(requestId);
+        throw error;
+      }
     },
 
     setVisible(visible) {

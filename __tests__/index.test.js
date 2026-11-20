@@ -986,6 +986,124 @@ describe('chat', () => {
     conversation.close();
   });
 
+  it('releases a completed page callback without affecting a later request', () => {
+    const conversation = open();
+    const completed = jest.fn();
+    const pending = jest.fn();
+    conversation.loadPreviousPage(completed);
+    const [, completedId] = mockNativeModule.chatLoadPreviousPage.mock.calls[0];
+    emitChatEvent({
+      leaseId: leaseIdOf(),
+      type: 'loadPreviousPageComplete',
+      requestId: completedId,
+    });
+
+    conversation.loadPreviousPage(pending);
+    const [, pendingId] = mockNativeModule.chatLoadPreviousPage.mock.calls[1];
+    const error = { code: 'NETWORK_ERROR', message: 'offline' };
+    // A completed request no longer owns an error handler.
+    emitChatEvent({
+      leaseId: leaseIdOf(),
+      type: 'loadPreviousPageError',
+      requestId: completedId,
+      error,
+    });
+    emitChatEvent({
+      leaseId: leaseIdOf(),
+      type: 'loadPreviousPageError',
+      requestId: pendingId,
+      error,
+    });
+
+    expect(completed).not.toHaveBeenCalled();
+    expect(pending).toHaveBeenCalledTimes(1);
+    expect(pending).toHaveBeenCalledWith(error);
+    conversation.close();
+  });
+
+  it.each([true, false])(
+    'an ignored call (callback: %s) leaves the active request handler intact',
+    (withCallback) => {
+      const conversation = open();
+      const active = jest.fn();
+      const ignored = jest.fn();
+      conversation.loadPreviousPage(active);
+      conversation.loadPreviousPage(withCallback ? ignored : undefined);
+      const [, activeId] = mockNativeModule.chatLoadPreviousPage.mock.calls[0];
+      const [, ignoredId] = mockNativeModule.chatLoadPreviousPage.mock.calls[1];
+      emitChatEvent({
+        leaseId: leaseIdOf(),
+        type: 'loadPreviousPageComplete',
+        requestId: ignoredId,
+      });
+      const error = { code: 'NETWORK_ERROR', message: 'offline' };
+      emitChatEvent({
+        leaseId: leaseIdOf(),
+        type: 'loadPreviousPageError',
+        requestId: activeId,
+        error,
+      });
+      emitChatEvent({
+        leaseId: leaseIdOf(),
+        type: 'loadPreviousPageComplete',
+        requestId: activeId,
+      });
+      emitChatEvent({
+        leaseId: leaseIdOf(),
+        type: 'loadPreviousPageError',
+        requestId: ignoredId,
+        error,
+      });
+
+      expect(active).toHaveBeenCalledTimes(1);
+      expect(active).toHaveBeenCalledWith(error);
+      expect(ignored).not.toHaveBeenCalled();
+      conversation.close();
+    }
+  );
+
+  it('does not reuse a successful request handler for a later call without one', () => {
+    const conversation = open();
+    const previous = jest.fn();
+    conversation.loadPreviousPage(previous);
+    const [, previousId] = mockNativeModule.chatLoadPreviousPage.mock.calls[0];
+    emitChatEvent({
+      leaseId: leaseIdOf(),
+      type: 'loadPreviousPageComplete',
+      requestId: previousId,
+    });
+    conversation.loadPreviousPage();
+    const [, requestId] = mockNativeModule.chatLoadPreviousPage.mock.calls[1];
+    emitChatEvent({
+      leaseId: leaseIdOf(),
+      type: 'loadPreviousPageError',
+      requestId,
+      error: { code: 'NETWORK_ERROR', message: 'offline' },
+    });
+    expect(previous).not.toHaveBeenCalled();
+    conversation.close();
+  });
+
+  it('releases a page handler if dispatch throws before native accepts it', () => {
+    const conversation = open();
+    const onError = jest.fn();
+    mockNativeModule.chatLoadPreviousPage.mockImplementationOnce(() => {
+      throw new Error('dispatch failed');
+    });
+    expect(() => conversation.loadPreviousPage(onError)).toThrow(
+      'dispatch failed'
+    );
+    const [, requestId] = mockNativeModule.chatLoadPreviousPage.mock.calls[0];
+    emitChatEvent({
+      leaseId: leaseIdOf(),
+      type: 'loadPreviousPageError',
+      requestId,
+      error: { code: 'NETWORK_ERROR', message: 'offline' },
+    });
+    expect(onError).not.toHaveBeenCalled();
+    conversation.close();
+  });
+
   it('forwards visibility as a boolean', () => {
     const conversation = open();
     conversation.setVisible(true);

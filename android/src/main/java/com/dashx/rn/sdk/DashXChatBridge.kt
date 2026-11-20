@@ -87,12 +87,23 @@ internal class DashXChatBridge(private val reactContext: ReactApplicationContext
     }
 
     fun loadPreviousPage(leaseId: String, requestId: Double) {
-        leases[leaseId]?.loadPreviousPage { error ->
-            emit(leaseId, "loadPreviousPageError") {
-                putDouble("requestId", requestId)
-                putMap("error", errorToMap(error))
-            }
+        val onComplete = {
+            emit(leaseId, "loadPreviousPageComplete") { putDouble("requestId", requestId) }
         }
+        val lease = leases[leaseId]
+        if (lease == null) {
+            onComplete()
+            return
+        }
+        lease.loadPreviousPage(
+            onError = { error ->
+                emit(leaseId, "loadPreviousPageError") {
+                    putDouble("requestId", requestId)
+                    putMap("error", errorToMap(error))
+                }
+            },
+            onComplete = onComplete
+        )
     }
 
     // ---- identity-scoped operations ----
