@@ -3,6 +3,10 @@ import DashX
 
 @objc(DashXReactNative)
 class DashXReactNative: RCTEventEmitter {
+    private let chatBridge = DashXChatBridge { body in
+        DashXEventEmitter.instance.dispatch(name: DashXChatBridge.eventName, body: body)
+    }
+
     override init() {
         super.init()
         DashXEventEmitter.instance.registerEventEmitter(eventEmitter: self)
@@ -16,7 +20,13 @@ class DashXReactNative: RCTEventEmitter {
     }
 
     override func supportedEvents() -> [String] {
-        return ["messageReceived", "linkReceived", "notificationClicked"]
+        return ["messageReceived", "linkReceived", "notificationClicked", DashXChatBridge.eventName]
+    }
+
+    // Leases would otherwise outlive a JS reload and keep the realtime connection open.
+    override func invalidate() {
+        chatBridge.closeAll()
+        super.invalidate()
     }
 
     @objc(configure:)
@@ -244,5 +254,61 @@ class DashXReactNative: RCTEventEmitter {
     @objc(getNotificationPermissionStatus:reject:)
     func getNotificationPermissionStatus(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         DashX.getNotificationPermissionStatus { status in resolve(status.rawValue) }
+    }
+
+    // MARK: - In-app chat
+
+    @objc(chatOpenConversation:chatIdentityId:conversationId:)
+    func chatOpenConversation(_ leaseId: String, chatIdentityId: String, conversationId: String) {
+        chatBridge.open(leaseId: leaseId, chatIdentityId: chatIdentityId, conversationId: conversationId)
+    }
+
+    @objc(chatCloseConversation:)
+    func chatCloseConversation(_ leaseId: String) {
+        chatBridge.close(leaseId: leaseId)
+    }
+
+    @objc(chatSetConversationVisible:visible:)
+    func chatSetConversationVisible(_ leaseId: String, visible: Bool) {
+        chatBridge.setVisible(leaseId: leaseId, visible: visible)
+    }
+
+    @objc(chatSendMessage:content:resolve:reject:)
+    func chatSendMessage(_ leaseId: String, content: NSDictionary, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        guard let content = content as? [String: Any] else {
+            reject("EINVAL", "content must be a plain object", nil)
+            return
+        }
+        chatBridge.sendMessage(leaseId: leaseId, content: content, resolve: resolve, reject: reject)
+    }
+
+    @objc(chatLoadPreviousPage:requestId:)
+    func chatLoadPreviousPage(_ leaseId: String, requestId: Double) {
+        chatBridge.loadPreviousPage(leaseId: leaseId, requestId: requestId)
+    }
+
+    @objc(chatFetchConversations:options:resolve:reject:)
+    func chatFetchConversations(_ chatIdentityId: String, options: Any?, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        chatBridge.fetchConversations(chatIdentityId: chatIdentityId, options: options as? NSDictionary, resolve: resolve, reject: reject)
+    }
+
+    @objc(chatFetchConversation:conversationId:resolve:reject:)
+    func chatFetchConversation(_ chatIdentityId: String, conversationId: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        chatBridge.fetchConversation(chatIdentityId: chatIdentityId, conversationId: conversationId, resolve: resolve, reject: reject)
+    }
+
+    @objc(chatSummarizeConversations:options:resolve:reject:)
+    func chatSummarizeConversations(_ chatIdentityId: String, options: Any?, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        chatBridge.summarizeConversations(chatIdentityId: chatIdentityId, options: options as? NSDictionary, resolve: resolve, reject: reject)
+    }
+
+    @objc(chatSummarizeUnread:resolve:reject:)
+    func chatSummarizeUnread(_ chatIdentityId: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        chatBridge.summarizeUnread(chatIdentityId: chatIdentityId, resolve: resolve, reject: reject)
+    }
+
+    @objc(chatResolveConversation:conversationId:resolve:reject:)
+    func chatResolveConversation(_ chatIdentityId: String, conversationId: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        chatBridge.resolveConversation(chatIdentityId: chatIdentityId, conversationId: conversationId, resolve: resolve, reject: reject)
     }
 }

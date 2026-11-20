@@ -75,6 +75,36 @@ class DashXReactNativeModule(reactContext: ReactApplicationContext) :
     override fun getNotificationPermissionStatus(promise: Promise) =
         impl.getNotificationPermissionStatus(promise)
 
+    override fun chatOpenConversation(leaseId: String, chatIdentityId: String, conversationId: String) =
+        impl.chatOpenConversation(leaseId, chatIdentityId, conversationId)
+
+    override fun chatCloseConversation(leaseId: String) =
+        impl.chatCloseConversation(leaseId)
+
+    override fun chatSetConversationVisible(leaseId: String, visible: Boolean) =
+        impl.chatSetConversationVisible(leaseId, visible)
+
+    override fun chatSendMessage(leaseId: String, content: ReadableMap, promise: Promise) =
+        impl.chatSendMessage(leaseId, content, promise)
+
+    override fun chatLoadPreviousPage(leaseId: String, requestId: Double) =
+        impl.chatLoadPreviousPage(leaseId, requestId)
+
+    override fun chatFetchConversations(chatIdentityId: String, options: ReadableMap?, promise: Promise) =
+        impl.chatFetchConversations(chatIdentityId, options, promise)
+
+    override fun chatFetchConversation(chatIdentityId: String, conversationId: String, promise: Promise) =
+        impl.chatFetchConversation(chatIdentityId, conversationId, promise)
+
+    override fun chatSummarizeConversations(chatIdentityId: String, options: ReadableMap?, promise: Promise) =
+        impl.chatSummarizeConversations(chatIdentityId, options, promise)
+
+    override fun chatSummarizeUnread(chatIdentityId: String, promise: Promise) =
+        impl.chatSummarizeUnread(chatIdentityId, promise)
+
+    override fun chatResolveConversation(chatIdentityId: String, conversationId: String, promise: Promise) =
+        impl.chatResolveConversation(chatIdentityId, conversationId, promise)
+
     override fun addListener(eventName: String) {
         // Required for RN built-in Event Emitter Calls
     }

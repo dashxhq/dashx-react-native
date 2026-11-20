@@ -34,6 +34,8 @@ class DashXReactNativeModuleImpl(private val reactContext: ReactApplicationConte
     // removed in `invalidate` so we don't leak across RN reloads.
     private val notificationClickedListener = DashXNotificationClickedListener(reactContext)
 
+    private val chatBridge = DashXChatBridge(reactContext)
+
     fun initialize() {
         MessageReceivedEventHolder.reactContext = reactContext
         DashX.registerNotificationListener(notificationClickedListener)
@@ -41,6 +43,8 @@ class DashXReactNativeModuleImpl(private val reactContext: ReactApplicationConte
 
     fun invalidate() {
         MessageReceivedEventHolder.reactContext = null
+        // Leases would otherwise outlive a JS reload and keep the realtime connection open.
+        chatBridge.closeAll()
         DashX.unregisterNotificationListener(notificationClickedListener)
     }
 
@@ -425,6 +429,37 @@ class DashXReactNativeModuleImpl(private val reactContext: ReactApplicationConte
             promise.resolve(if (wasRequested) PERMISSION_DENIED else PERMISSION_NOT_DETERMINED)
         }
     }
+
+    // --- In-app chat ---
+
+    fun chatOpenConversation(leaseId: String, chatIdentityId: String, conversationId: String) =
+        chatBridge.open(leaseId, chatIdentityId, conversationId)
+
+    fun chatCloseConversation(leaseId: String) = chatBridge.close(leaseId)
+
+    fun chatSetConversationVisible(leaseId: String, visible: Boolean) =
+        chatBridge.setVisible(leaseId, visible)
+
+    fun chatSendMessage(leaseId: String, content: ReadableMap, promise: Promise) =
+        chatBridge.sendMessage(leaseId, content, promise)
+
+    fun chatLoadPreviousPage(leaseId: String, requestId: Double) =
+        chatBridge.loadPreviousPage(leaseId, requestId)
+
+    fun chatFetchConversations(chatIdentityId: String, options: ReadableMap?, promise: Promise) =
+        chatBridge.fetchConversations(chatIdentityId, options, promise)
+
+    fun chatFetchConversation(chatIdentityId: String, conversationId: String, promise: Promise) =
+        chatBridge.fetchConversation(chatIdentityId, conversationId, promise)
+
+    fun chatSummarizeConversations(chatIdentityId: String, options: ReadableMap?, promise: Promise) =
+        chatBridge.summarizeConversations(chatIdentityId, options, promise)
+
+    fun chatSummarizeUnread(chatIdentityId: String, promise: Promise) =
+        chatBridge.summarizeUnread(chatIdentityId, promise)
+
+    fun chatResolveConversation(chatIdentityId: String, conversationId: String, promise: Promise) =
+        chatBridge.resolveConversation(chatIdentityId, conversationId, promise)
 
     companion object {
         const val NAME = "DashXReactNative"
